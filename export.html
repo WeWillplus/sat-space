@@ -36,13 +36,14 @@
   <a class="back" href="index.html">&larr; Back to Sat Space</a>
   <div class="box">
     <h1>Reel Overlay Export</h1>
-    <div class="sub">Composites every approved slot onto a transparent 1080&times;1920 PNG, positioned and scaled exactly as placed. Drop it straight onto your reel footage.</div>
+    <div class="sub">Three modes: <b>Slots Only</b> (transparent, real overlay for footage), <b>Empty Grid</b> (plain white/black grid to preview placement), <b>Grid + Slots</b> (both together). All at full 1080&times;1920 reel resolution.</div>
 
     <div class="preview-shell"><canvas id="exportCanvas" width="1080" height="1920"></canvas></div>
 
     <div class="btns">
-      <button class="btn" id="btnRegen" type="button">Regenerate</button>
-      <button class="btn" id="btnEmptyGrid" type="button">Empty Grid Preview</button>
+      <button class="btn" id="btnRegen" type="button">Slots Only</button>
+      <button class="btn" id="btnEmptyGrid" type="button">Empty Grid</button>
+      <button class="btn" id="btnGridAndSlots" type="button">Grid + Slots</button>
       <button class="btn btn-primary" id="btnDownload" type="button" disabled>Download PNG</button>
     </div>
 
@@ -55,14 +56,12 @@
   var COLS=18, ROWS=8, CELL=60;
   var canvas=document.getElementById('exportCanvas'), ctx=canvas.getContext('2d');
   var statusEl=document.getElementById('status');
-  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnDownload=document.getElementById('btnDownload');
+  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnGridAndSlots=document.getElementById('btnGridAndSlots'), btnDownload=document.getElementById('btnDownload');
   var filenamePrefix='sat-space-overlay';
 
   function log(msg){ statusEl.textContent += msg + '\n'; }
 
-  function drawEmptyGrid(){
-    statusEl.textContent='';
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+  function drawGridLines(){
     ctx.fillStyle='#FFFFFF';
     ctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
     ctx.strokeStyle='#17130E';
@@ -71,8 +70,15 @@
     for(var r=1;r<ROWS;r++){ ctx.beginPath(); ctx.moveTo(0,r*CELL); ctx.lineTo(COLS*CELL,r*CELL); ctx.stroke(); }
     ctx.lineWidth=4;
     ctx.strokeRect(2,2,COLS*CELL-4,ROWS*CELL-4);
+  }
+
+  function generateEmptyGrid(){
+    statusEl.textContent='';
+    btnDownload.disabled=true;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     filenamePrefix='sat-space-empty-grid';
-    log('Drew empty 18×8 grid preview. Ready to download.');
+    drawGridLines();
+    log('Drew empty 18×8 grid. Ready to download.');
     btnDownload.disabled=false;
   }
 
@@ -108,11 +114,12 @@
     });
   }
 
-  function generate(){
+  function generate(includeGrid){
     statusEl.textContent='';
     btnDownload.disabled=true;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    filenamePrefix='sat-space-overlay';
+    filenamePrefix=includeGrid ? 'sat-space-grid-and-slots' : 'sat-space-overlay';
+    if(includeGrid){ drawGridLines(); log('Drew grid base.'); }
     log('Fetching approved slots...');
     fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
       var groups={};
@@ -144,9 +151,10 @@
     }, 'image/png');
   });
 
-  btnRegen.addEventListener('click', generate);
-  btnEmptyGrid.addEventListener('click', drawEmptyGrid);
-  generate();
+  btnRegen.addEventListener('click', function(){ generate(false); });
+  btnEmptyGrid.addEventListener('click', generateEmptyGrid);
+  btnGridAndSlots.addEventListener('click', function(){ generate(true); });
+  generate(false);
 })();
 </script>
 </body>
