@@ -28,7 +28,10 @@ export async function onRequestPost(context) {
       Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY
     }
   });
-  if (!checkRes.ok) return json({ error: 'Failed to verify slot availability' }, 502);
+  if (!checkRes.ok) {
+    const detail = await checkRes.text();
+    return json({ error: 'Failed to verify slot availability', status: checkRes.status, detail: detail }, 502);
+  }
 
   const existing = await checkRes.json();
   if (existing.length !== cells.length) return json({ error: 'One or more selected slots do not exist' }, 400);
