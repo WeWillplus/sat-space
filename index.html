@@ -446,7 +446,7 @@
   });
 
   var toastEl=document.getElementById('toast'), tT=document.getElementById('toastT'), tS=document.getElementById('toastS'), tTimer;
-  function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },8000); }
+  function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },4200); }
 
   if(window.ResizeObserver){ var ro=new ResizeObserver(function(){ renderSel(); renderArt(); }); ro.observe(editor); ro.observe(reel); }
   window.addEventListener('resize', function(){ renderSel(); renderArt(); });
