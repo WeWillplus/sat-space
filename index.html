@@ -436,7 +436,8 @@
         if(res.ok){
           toast('Reservation created', 'Purchase #'+res.data.purchaseId+' · '+nfSats.format(res.data.satsAmount)+' sats. Checkout arrives next.');
         } else {
-          toast('Could not reserve', res.data.error || 'Something went wrong. Try again.');
+          var msg=(res.data.error || 'Something went wrong. Try again.')+(res.data.detail?': '+res.data.detail:'');
+          toast('Could not reserve', msg);
           if(res.data.error && res.data.error.indexOf('sold')>-1){ loadSlots(); }
         }
         btnReserve.disabled = slots()===0;
@@ -445,7 +446,7 @@
   });
 
   var toastEl=document.getElementById('toast'), tT=document.getElementById('toastT'), tS=document.getElementById('toastS'), tTimer;
-  function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },3400); }
+  function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },8000); }
 
   if(window.ResizeObserver){ var ro=new ResizeObserver(function(){ renderSel(); renderArt(); }); ro.observe(editor); ro.observe(reel); }
   window.addEventListener('resize', function(){ renderSel(); renderArt(); });
