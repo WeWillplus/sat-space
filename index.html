@@ -60,7 +60,8 @@
   #editorBand.mode-pan.grabbing { cursor:grabbing; }
   .cell { background:var(--paper-2); }
   #editorBand .cell { transition:background .1s ease; }
-  #editorBand .cell:hover { background:var(--grid-2); }
+  #editorBand .cell:hover:not(.sold) { background:var(--grid-2); }
+  #editorBand .cell.sold { background:var(--faint); cursor:not-allowed; }
 
   .overlaySel { position:absolute; background:var(--accent-dim); pointer-events:none; display:none; z-index:2; }
   .overlaySel::after { content:""; position:absolute; inset:-1px;
@@ -326,6 +327,27 @@
   function fillCells(band){ var f=document.createDocumentFragment(); for(var i=0;i<COLS*ROWS;i++){ var d=document.createElement('div'); d.className='cell'; f.appendChild(d); } band.insertBefore(f, band.firstChild); }
   fillCells(editor); fillCells(reel);
 
+  var editorCells=Array.prototype.slice.call(editor.querySelectorAll('.cell'));
+  var soldSet=new Set();
+  function cellIndex(c,r){ return r*COLS+c; }
+  function isSold(c,r){ return soldSet.has(c+','+r); }
+  function rectHasSold(c0,r0,c1,r1){ for(var r=r0;r<=r1;r++) for(var c=c0;c<=c1;c++) if(isSold(c,r)) return true; return false; }
+  function markSold(list){
+    soldSet.clear();
+    editorCells.forEach(function(el){ el.classList.remove('sold'); });
+    if(!Array.isArray(list)) return;
+    list.forEach(function(s){
+      if(!s.is_sold) return;
+      soldSet.add(s.col+','+s.row);
+      var idx=cellIndex(s.col,s.row);
+      if(editorCells[idx]) editorCells[idx].classList.add('sold');
+    });
+  }
+  function loadSlots(){
+    fetch('/api/slots').then(function(r){ return r.json(); }).then(markSold).catch(function(){ /* offline or first deploy without the endpoint yet, grid just stays empty */ });
+  }
+  loadSlots();
+
   var refs={
     editor:{ art:document.getElementById('artEditor'), seln:document.getElementById('selEditor'), img:document.querySelector('#artEditor img') },
     reel:{ art:document.getElementById('artReel'), seln:document.getElementById('selReel'), img:document.querySelector('#artReel img') }
@@ -342,13 +364,18 @@
 
   var down=false, mode='select', anchor=null, panStart=null;
   editor.addEventListener('pointerdown', function(e){
-    editor.setPointerCapture(e.pointerId); down=true;
-    if(art){ mode='pan'; editor.classList.add('grabbing'); panStart={x:e.clientX,y:e.clientY,fpx:art.fpx,fpy:art.fpy}; }
-    else { mode='select'; var c=cellFromEvent(e); anchor=c; sel={c0:c.c,r0:c.r,c1:c.c,r1:c.r}; renderAll(); }
+    if(art){ editor.setPointerCapture(e.pointerId); down=true; mode='pan'; editor.classList.add('grabbing'); panStart={x:e.clientX,y:e.clientY,fpx:art.fpx,fpy:art.fpy}; return; }
+    var c=cellFromEvent(e);
+    if(isSold(c.c,c.r)){ toast('Slot already taken','Pick a different block.'); return; }
+    editor.setPointerCapture(e.pointerId); down=true; mode='select'; anchor=c; sel={c0:c.c,r0:c.r,c1:c.c,r1:c.r}; renderAll();
   });
   editor.addEventListener('pointermove', function(e){
     if(!down) return;
-    if(mode==='select'){ var c=cellFromEvent(e); sel={c0:Math.min(anchor.c,c.c),r0:Math.min(anchor.r,c.r),c1:Math.max(anchor.c,c.c),r1:Math.max(anchor.r,c.r)}; renderAll(); }
+    if(mode==='select'){
+      var c=cellFromEvent(e);
+      var nc0=Math.min(anchor.c,c.c), nr0=Math.min(anchor.r,c.r), nc1=Math.max(anchor.c,c.c), nr1=Math.max(anchor.r,c.r);
+      if(!rectHasSold(nc0,nr0,nc1,nr1)){ sel={c0:nc0,r0:nr0,c1:nc1,r1:nr1}; renderAll(); }
+    }
     else if(mode==='pan' && art){ var m=maxPan(refs.editor); art.fpx=clamp(panStart.fpx+(m.x>0?(e.clientX-panStart.x)/m.x:0),-1,1); art.fpy=clamp(panStart.fpy+(m.y>0?(e.clientY-panStart.y)/m.y:0),-1,1); renderArt(); }
   });
   function endDown(){ if(!down)return; down=false; editor.classList.remove('grabbing'); }
@@ -398,7 +425,24 @@
   zoom.addEventListener('input', function(){ if(!art)return; art.z=parseFloat(zoom.value); zoomVal.textContent=art.z.toFixed(1)+'×'; art.fpx=clamp(art.fpx,-1,1); art.fpy=clamp(art.fpy,-1,1); renderArt(); });
   btnReset.addEventListener('click', function(){ if(!art)return; art.z=1; art.fpx=0; art.fpy=0; zoom.value=1; zoomVal.textContent='1.0×'; renderArt(); });
   btnRemove.addEventListener('click', function(){ art=null; adjust.classList.add('hidden'); refs.editor.img.removeAttribute('src'); refs.reel.img.removeAttribute('src'); renderAll(); });
-  btnReserve.addEventListener('click', function(){ if(slots()===0)return; var n=slots(); toast('Selection reserved (demo)', n+(n===1?' slot':' slots')+' · '+nfSats.format(n*SATS)+' sats. Checkout arrives in phase 2.'); });
+  btnReserve.addEventListener('click', function(){
+    if(slots()===0 || !sel) return;
+    var cells=[];
+    for(var r=sel.r0;r<=sel.r1;r++){ for(var c=sel.c0;c<=sel.c1;c++){ cells.push({col:c,row:r}); } }
+    btnReserve.disabled=true;
+    fetch('/api/reserve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cells:cells}) })
+      .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
+      .then(function(res){
+        if(res.ok){
+          toast('Reservation created', 'Purchase #'+res.data.purchaseId+' · '+nfSats.format(res.data.satsAmount)+' sats. Checkout arrives next.');
+        } else {
+          toast('Could not reserve', res.data.error || 'Something went wrong. Try again.');
+          if(res.data.error && res.data.error.indexOf('sold')>-1){ loadSlots(); }
+        }
+        btnReserve.disabled = slots()===0;
+      })
+      .catch(function(){ toast('Network error','Could not reach the server. Try again.'); btnReserve.disabled = slots()===0; });
+  });
 
   var toastEl=document.getElementById('toast'), tT=document.getElementById('toastT'), tS=document.getElementById('toastS'), tTimer;
   function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },3400); }
