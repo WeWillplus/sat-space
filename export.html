@@ -42,6 +42,7 @@
 
     <div class="btns">
       <button class="btn" id="btnRegen" type="button">Regenerate</button>
+      <button class="btn" id="btnEmptyGrid" type="button">Empty Grid Preview</button>
       <button class="btn btn-primary" id="btnDownload" type="button" disabled>Download PNG</button>
     </div>
 
@@ -54,9 +55,26 @@
   var COLS=18, ROWS=8, CELL=60;
   var canvas=document.getElementById('exportCanvas'), ctx=canvas.getContext('2d');
   var statusEl=document.getElementById('status');
-  var btnRegen=document.getElementById('btnRegen'), btnDownload=document.getElementById('btnDownload');
+  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnDownload=document.getElementById('btnDownload');
+  var filenamePrefix='sat-space-overlay';
 
   function log(msg){ statusEl.textContent += msg + '\n'; }
+
+  function drawEmptyGrid(){
+    statusEl.textContent='';
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#FFFFFF';
+    ctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
+    ctx.strokeStyle='#17130E';
+    ctx.lineWidth=1;
+    for(var c=1;c<COLS;c++){ ctx.beginPath(); ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,ROWS*CELL); ctx.stroke(); }
+    for(var r=1;r<ROWS;r++){ ctx.beginPath(); ctx.moveTo(0,r*CELL); ctx.lineTo(COLS*CELL,r*CELL); ctx.stroke(); }
+    ctx.lineWidth=4;
+    ctx.strokeRect(2,2,COLS*CELL-4,ROWS*CELL-4);
+    filenamePrefix='sat-space-empty-grid';
+    log('Drew empty 18×8 grid preview. Ready to download.');
+    btnDownload.disabled=false;
+  }
 
   function loadImage(src){
     return new Promise(function(resolve,reject){
@@ -94,6 +112,7 @@
     statusEl.textContent='';
     btnDownload.disabled=true;
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    filenamePrefix='sat-space-overlay';
     log('Fetching approved slots...');
     fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
       var groups={};
@@ -119,13 +138,14 @@
       if(!blob){ log('Export failed: could not create image (possible CORS issue with the image source).'); return; }
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');
-      a.href=url; a.download='sat-space-overlay-'+Date.now()+'.png';
+      a.href=url; a.download=filenamePrefix+'-'+Date.now()+'.png';
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     }, 'image/png');
   });
 
   btnRegen.addEventListener('click', generate);
+  btnEmptyGrid.addEventListener('click', drawEmptyGrid);
   generate();
 })();
 </script>
