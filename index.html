@@ -62,7 +62,7 @@
   #editorBand .cell { transition:background .1s ease; }
   #editorBand .cell:hover:not(.sold) { background:var(--grid-2); }
   #editorBand .cell.sold { background:var(--faint); cursor:not-allowed; }
-  #editorBand .cell.sold.review { background:rgba(247,147,26,.38); cursor:not-allowed; }
+  #editorBand .cell.sold.review { background:var(--accent); cursor:not-allowed; }
 
   .approved-art { position:absolute; overflow:hidden; pointer-events:none; z-index:1; }
   .approved-art img { position:absolute; top:0; left:0; max-width:none; -webkit-user-drag:none; }
@@ -348,9 +348,12 @@
 
   var editorCells=Array.prototype.slice.call(editor.querySelectorAll('.cell'));
   var soldSet=new Set();
+  var statusMap={};
   var approvedOverlayEls=[];
+  var claimedEl=document.getElementById('claimed');
   function cellIndex(c,r){ return r*COLS+c; }
   function isSold(c,r){ return soldSet.has(c+','+r); }
+  function slotStatus(c,r){ return statusMap[c+','+r]; }
   function rectHasSold(c0,r0,c1,r1){ for(var r=r0;r<=r1;r++) for(var c=c0;c<=c1;c++) if(isSold(c,r)) return true; return false; }
 
   function clearApprovedOverlays(){ approvedOverlayEls.forEach(function(el){ el.remove(); }); approvedOverlayEls=[]; }
@@ -393,14 +396,17 @@
 
   function markSold(list){
     soldSet.clear();
+    statusMap={};
     editorCells.forEach(function(el){ el.classList.remove('sold','review'); });
     clearApprovedOverlays();
-    if(!Array.isArray(list)) return;
+    if(!Array.isArray(list)){ claimedEl.textContent='0'; return; }
 
-    var groups={};
+    var groups={}, approvedCount=0;
     list.forEach(function(s){
       if(!s.is_sold) return;
       soldSet.add(s.col+','+s.row);
+      statusMap[s.col+','+s.row]=s.status;
+      if(s.status==='approved') approvedCount++;
       var idx=cellIndex(s.col,s.row);
       var cellEl=editorCells[idx];
       if(cellEl) cellEl.classList.add('sold');
@@ -412,6 +418,7 @@
       }
     });
     Object.keys(groups).forEach(function(pid){ buildApprovedOverlay(groups[pid]); });
+    claimedEl.textContent=approvedCount;
   }
   function loadSlots(){
     fetch('/api/slots').then(function(r){ return r.json(); }).then(markSold).catch(function(){ /* offline or first deploy without the endpoint yet, grid just stays empty */ });
@@ -437,7 +444,12 @@
   editor.addEventListener('pointerdown', function(e){
     if(art){ editor.setPointerCapture(e.pointerId); down=true; mode='pan'; editor.classList.add('grabbing'); panStart={x:e.clientX,y:e.clientY,fpx:art.fpx,fpy:art.fpy}; return; }
     var c=cellFromEvent(e);
-    if(isSold(c.c,c.r)){ toast('Slot already taken','Pick a different block.'); return; }
+    if(isSold(c.c,c.r)){
+      var st=slotStatus(c.c,c.r);
+      var detail=st==='approved' ? 'This slot is already sold. Pick a different block.' : 'This slot is paid and awaiting review. Pick a different block.';
+      toast('Slot already taken', detail);
+      return;
+    }
     editor.setPointerCapture(e.pointerId); down=true; mode='select'; anchor=c; sel={c0:c.c,r0:c.r,c1:c.c,r1:c.r}; renderAll();
   });
   editor.addEventListener('pointermove', function(e){
