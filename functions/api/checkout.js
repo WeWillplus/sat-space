@@ -53,6 +53,8 @@ export async function onRequestPost(context) {
   params.append('success_url', origin + '/success.html?purchase_id=' + purchaseId);
   params.append('cancel_url', origin + '/index.html?canceled=1');
   params.append('metadata[purchase_id]', String(purchaseId));
+  params.append('invoice_creation[enabled]', 'true');
+  params.append('invoice_creation[invoice_data][footer]', 'No VAT charged. Small business exemption under Austrian VAT law (Kleinunternehmerregelung, section 6 para 1 no 27 UStG).');
 
   const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
