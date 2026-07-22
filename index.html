@@ -349,14 +349,20 @@
   var editorCells=Array.prototype.slice.call(editor.querySelectorAll('.cell'));
   var soldSet=new Set();
   var statusMap={};
-  var approvedOverlayEls=[];
+  var approvedOverlayEls={ editor:[], reel:[] };
+  var approvedBands={ editor:editor, reel:reel };
   var claimedEl=document.getElementById('claimed');
   function cellIndex(c,r){ return r*COLS+c; }
   function isSold(c,r){ return soldSet.has(c+','+r); }
   function slotStatus(c,r){ return statusMap[c+','+r]; }
   function rectHasSold(c0,r0,c1,r1){ for(var r=r0;r<=r1;r++) for(var c=c0;c<=c1;c++) if(isSold(c,r)) return true; return false; }
 
-  function clearApprovedOverlays(){ approvedOverlayEls.forEach(function(el){ el.remove(); }); approvedOverlayEls=[]; }
+  function clearApprovedOverlays(){
+    Object.keys(approvedOverlayEls).forEach(function(key){
+      approvedOverlayEls[key].forEach(function(el){ el.remove(); });
+      approvedOverlayEls[key]=[];
+    });
+  }
 
   function renderApprovedArt(container, natW, natH, zoom, ox, oy){
     var lay=container.getBoundingClientRect();
@@ -370,7 +376,8 @@
     img.style.top=((lay.height-ih)/2 + oy*maxY)+'px';
   }
 
-  function buildApprovedOverlay(group){
+  function buildApprovedOverlay(bandKey, group){
+    var bandEl=approvedBands[bandKey];
     var cols=group.cells.map(function(c){return c.col;}), rows=group.cells.map(function(c){return c.row;});
     var c0=Math.min.apply(null,cols), c1=Math.max.apply(null,cols);
     var r0=Math.min.apply(null,rows), r1=Math.max.apply(null,rows);
@@ -383,14 +390,16 @@
     img.onload=function(){ renderApprovedArt(container, img.naturalWidth, img.naturalHeight, group.artZoom||1, group.artOffsetX||0, group.artOffsetY||0); };
     img.src=group.imageUrl;
     container.appendChild(img);
-    editor.appendChild(container);
-    approvedOverlayEls.push(container);
+    bandEl.appendChild(container);
+    approvedOverlayEls[bandKey].push(container);
   }
 
   function refreshApprovedOverlaySizes(){
-    approvedOverlayEls.forEach(function(el){
-      var img=el.querySelector('img');
-      if(img.naturalWidth) renderApprovedArt(el, img.naturalWidth, img.naturalHeight, parseFloat(el.dataset.zoom), parseFloat(el.dataset.ox), parseFloat(el.dataset.oy));
+    Object.keys(approvedOverlayEls).forEach(function(key){
+      approvedOverlayEls[key].forEach(function(el){
+        var img=el.querySelector('img');
+        if(img.naturalWidth) renderApprovedArt(el, img.naturalWidth, img.naturalHeight, parseFloat(el.dataset.zoom), parseFloat(el.dataset.ox), parseFloat(el.dataset.oy));
+      });
     });
   }
 
@@ -417,7 +426,7 @@
         cellEl.classList.add('review');
       }
     });
-    Object.keys(groups).forEach(function(pid){ buildApprovedOverlay(groups[pid]); });
+    Object.keys(groups).forEach(function(pid){ buildApprovedOverlay('editor', groups[pid]); buildApprovedOverlay('reel', groups[pid]); });
     claimedEl.textContent=approvedCount;
   }
   function loadSlots(){
