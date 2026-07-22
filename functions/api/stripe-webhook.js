@@ -101,5 +101,37 @@ async function handle(context) {
     return json({ error: 'Failed to mark slots sold', detail: detail }, 502);
   }
 
+  await notifyDiscord(env, purchaseId, email);
+
   return json({ received: true });
+}
+
+async function notifyDiscord(env, purchaseId, email) {
+  if (!env.DISCORD_WEBHOOK_URL) return;
+
+  let info = null;
+  try {
+    const infoRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases?id=eq.' + purchaseId + '&select=slot_count,sats_amount,eur_amount', {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY }
+    });
+    if (infoRes.ok) {
+      const rows = await infoRes.json();
+      info = rows[0];
+    }
+  } catch (e) { /* notification is best-effort, missing details shouldn't block it */ }
+
+  const lines = ['New Sat Space purchase, ready for review.', 'Purchase #' + purchaseId];
+  if (info) {
+    lines.push(info.slot_count + (info.slot_count === 1 ? ' slot' : ' slots') + ' | ' + info.sats_amount + ' sats | EUR ' + info.eur_amount);
+  }
+  if (email) lines.push('Buyer: ' + email);
+  lines.push('Approve it in Supabase, purchases table.');
+
+  try {
+    await fetch(env.DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: lines.join('\n') })
+    });
+  } catch (e) { /* notification is best-effort, must never fail the payment confirmation */ }
 }
