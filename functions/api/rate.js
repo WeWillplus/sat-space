@@ -1,7 +1,10 @@
 export async function onRequestGet(context) {
-  const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
+  const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', {
+    headers: { 'Accept': 'application/json' }
+  });
   if (!res.ok) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch rate' }), {
+    const detail = await res.text();
+    return new Response(JSON.stringify({ error: 'Failed to fetch rate', status: res.status, detail: detail }), {
       status: 502,
       headers: { 'content-type': 'application/json' }
     });
