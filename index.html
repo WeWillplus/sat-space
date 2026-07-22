@@ -263,7 +263,7 @@
             <div class="ticket-body">
               <div class="price"><span id="satsTotal">0</span><span class="u">sats</span></div>
               <div class="price-eur" id="eurTotal">&euro;0.00</div>
-              <div class="rate-note">Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout. Ref: &euro;57,957 / BTC.</div>
+              <div class="rate-note" id="rateNote">Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout. Loading live rate&hellip;</div>
             </div>
           </div>
         </div>
@@ -318,6 +318,21 @@
 <script>
 (function(){
   var COLS=18, ROWS=8, SATS=140000, RATE=57957;
+  var nfEurWhole=new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+  var rateNote=document.getElementById('rateNote');
+  function loadRate(){
+    fetch('/api/rate').then(function(r){ return r.json(); }).then(function(data){
+      if(data && data.rate){
+        RATE=data.rate;
+        rateNote.textContent='Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout. Live rate: '+nfEurWhole.format(RATE)+' / BTC.';
+        renderSummary();
+      } else {
+        rateNote.textContent='Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout.';
+      }
+    }).catch(function(){
+      rateNote.textContent='Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout.';
+    });
+  }
   var editor=document.getElementById('editorBand');
   var reel=document.getElementById('reelBand');
   var sel=null, art=null;
@@ -347,6 +362,7 @@
     fetch('/api/slots').then(function(r){ return r.json(); }).then(markSold).catch(function(){ /* offline or first deploy without the endpoint yet, grid just stays empty */ });
   }
   loadSlots();
+  loadRate();
 
   var refs={
     editor:{ art:document.getElementById('artEditor'), seln:document.getElementById('selEditor'), img:document.querySelector('#artEditor img') },
