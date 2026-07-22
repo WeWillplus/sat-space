@@ -9,7 +9,8 @@ export async function onRequestGet(context) {
   });
 
   if (!res.ok) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch slots' }), {
+    const detail = await res.text();
+    return new Response(JSON.stringify({ error: 'Failed to fetch slots', status: res.status, detail }), {
       status: 502,
       headers: { 'content-type': 'application/json' }
     });
