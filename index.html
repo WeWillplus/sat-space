@@ -30,8 +30,10 @@
 
   .ss-top { background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
   .ss-brand { display:flex; align-items:center; gap:13px; }
+  .ss-logo { height:28px; width:auto; display:block; }
+  .ss-titlerow { display:flex; align-items:baseline; gap:10px; }
   .ss-word { font-family:var(--display); font-size:28px; font-weight:700; letter-spacing:.015em; text-transform:uppercase; line-height:1; }
-  .ss-sub { font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--muted); margin-top:6px; }
+  .ss-sub { font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--muted); }
   .ss-sub b { color:var(--blue); font-weight:700; }
   .ss-meta { text-align:right; }
   .ss-counter { font-family:var(--mono); font-size:20px; font-weight:700; letter-spacing:.02em; color:var(--ink); font-variant-numeric:tabular-nums; }
@@ -144,6 +146,20 @@
   .foot { margin-top:26px; padding:14px 16px; border:2px solid var(--ink); background:var(--paper-2); font-size:11.5px; color:var(--ink-soft); line-height:1.6; }
   .foot b { color:var(--ink); }
 
+  .faq { margin-top:26px; }
+  .faq-list { background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); }
+  .faq-item { border-bottom:1px solid var(--grid); }
+  .faq-item:last-child { border-bottom:none; }
+  .faq-item summary { cursor:pointer; padding:14px 16px; font-size:14px; font-weight:600; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .faq-item summary::-webkit-details-marker { display:none; }
+  .faq-item summary::after { content:"+"; font-family:var(--mono); font-size:18px; font-weight:700; color:var(--accent-deep); flex-shrink:0; transition:transform .15s ease; }
+  .faq-item[open] summary::after { transform:rotate(45deg); }
+  .faq-item .faq-a { padding:0 16px 16px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; max-width:72ch; }
+
+  .legal { margin-top:24px; padding-top:16px; border-top:1px solid var(--grid); display:flex; gap:18px; flex-wrap:wrap; justify-content:center; }
+  .legal a { font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-decoration:none; }
+  .legal a:hover { color:var(--ink-soft); text-decoration:underline; }
+
   .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--good); color:var(--ink); font-size:13px; padding:12px 16px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:340px; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   .toast .tt { font-weight:700; }
@@ -158,9 +174,10 @@
   <div class="ss-wrap">
     <header class="ss-top">
       <div class="ss-brand">
-        <div>
+        <img class="ss-logo" src="logo.svg" alt="WeWill+">
+        <div class="ss-titlerow">
           <div class="ss-word">Sat Space</div>
-          <div class="ss-sub">by <b>WeWill+</b></div>
+          <div class="ss-sub">by <b>Dustin Williamson</b></div>
         </div>
       </div>
       <div class="ss-meta">
@@ -254,9 +271,41 @@
       </div>
     </main>
 
-    <footer class="foot">
-      <b>Phase 1 of 3.</b> This is the interactive core: select, upload, position. Payments, saved slots across visitors, approval, and the reel export come next. Nothing here is charged.
-    </footer>
+    <section class="faq">
+      <div class="stage-head">
+        <div class="eyebrow">FAQ</div>
+        <div class="stage-title">Questions people actually ask.</div>
+      </div>
+
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>What actually is Sat Space?</summary>
+          <div class="faq-a">A limited, 2 month run of ad space in all my reels once Sat Space goes live. 144 total slots, priced in sats, first come first served.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Why is this priced in sats instead of euros?</summary>
+          <div class="faq-a">Let me be honest, I'd love to just take sats straight up. But here in Austria that's a pain in the ass. Invoicing in euros, paying the regular tax on that, then converting what's left into sats myself and sending it straight into the current challenge, that's the clean way to do it. So sats set the price. Euros settle the bill.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What if Bitcoin's price moves after I pay?</summary>
+          <div class="faq-a">Here's the fun part. If Bitcoin's price goes up before you check out, your slot costs you a bit more in euros. If it drops, you get it cheaper. Either way, you're always paying the exact same amount of Bitcoin. Kind of poetic for a Bitcoin challenge, no?</div>
+        </details>
+        <details class="faq-item">
+          <summary>What content is allowed?</summary>
+          <div class="faq-a">Any static image works as your slot's artwork. Be creative, promote your company, slap your face on it if you like. But there are rules. No adult content, no hate, no violence, no scam promotion. And let's not get political on this one. Every submission gets a manual approval pass by me before it goes live in an actual reel.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What happens once the 2 months are up?</summary>
+          <div class="faq-a">Every slot disappears on the same end date, no matter when you bought in. That's also the reason to buy early, earlier buyers get more total airtime out of the same fixed window.</div>
+        </details>
+      </div>
+    </section>
+
+    <div class="legal">
+      <a href="impressum.html">Impressum</a>
+      <a href="datenschutz.html">Datenschutz</a>
+      <a href="agb.html">AGB</a>
+    </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite">
