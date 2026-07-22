@@ -35,6 +35,14 @@ async function verifyStripeSignature(payload, sigHeader, secret) {
 }
 
 export async function onRequestPost(context) {
+  try {
+    return await handle(context);
+  } catch (e) {
+    return json({ error: 'Unhandled exception', message: e.message, stack: e.stack }, 500);
+  }
+}
+
+async function handle(context) {
   const { request, env } = context;
 
   const rawBody = await request.text();
