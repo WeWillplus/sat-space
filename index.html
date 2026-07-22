@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sat Space — WeWill+</title>
+<style>
+  html, body { margin:0; padding:0; background:#ECECEA; }
+  .ss-app *, .ss-app *::before, .ss-app *::after { box-sizing: border-box; }
+  .ss-app {
+    --paper:#ECECEA; --paper-2:#FFFFFF; --grid:#DBDBD7; --grid-2:#E5E5E1;
+    --ink:#17130E; --ink-soft:#4A4136; --muted:#8A7F6B; --faint:#B3A891;
+    --accent:#F7931A; --accent-deep:#CF7409; --accent-dim:rgba(247,147,26,.16);
+    --blue:#2C5AA0; --good:#2E9E6B; --line:#17130E;
+    --mono: ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --display:"Futura","Futura PT","Jost","Century Gothic","Avenir Next",var(--sans);
+    color-scheme: light;
+    color:var(--ink); font-family:var(--sans); min-height:100vh; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      linear-gradient(var(--grid-2) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 1px);
+    background-size: 96px 96px, 96px 96px, 16px 16px, 16px 16px;
+  }
+  .ss-wrap { max-width:1120px; margin:0 auto; padding:24px 22px 40px; }
+
+  .ss-top { background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .ss-brand { display:flex; align-items:center; gap:13px; }
+  .ss-word { font-family:var(--display); font-size:28px; font-weight:700; letter-spacing:.015em; text-transform:uppercase; line-height:1; }
+  .ss-sub { font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--muted); margin-top:6px; }
+  .ss-sub b { color:var(--blue); font-weight:700; }
+  .ss-meta { text-align:right; }
+  .ss-counter { font-family:var(--mono); font-size:20px; font-weight:700; letter-spacing:.02em; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .ss-counter .s { color:var(--accent); }
+  .ss-meta .l { font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:3px; }
+
+  .ss-main { display:grid; grid-template-columns: 1fr 340px; gap:22px; margin-top:22px; align-items:start; }
+  .col-left, .col-right { display:flex; flex-direction:column; gap:18px; min-width:0; }
+  @media (max-width:860px){
+    .ss-main { display:flex; flex-direction:column; gap:18px; }
+    .col-left, .col-right { display:contents; }
+    .b-intro{ order:1; } .b-editor{ order:2; } .b-preview{ order:3; } .b-artwork{ order:4; } .b-selection{ order:5; } .b-reserve{ order:6; }
+  }
+
+  .eyebrow { font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); font-weight:700; display:flex; align-items:center; gap:9px; }
+  .eyebrow .tag { color:var(--muted); font-weight:400; }
+
+  .stage-head { margin-bottom:12px; }
+  .stage-title { font-size:15px; font-weight:600; margin-top:6px; }
+
+  .band { position:relative; display:grid; grid-template-columns:repeat(18,1fr); grid-template-rows:repeat(8,1fr); gap:1px; background:var(--ink); aspect-ratio:18/8; border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); touch-action:none; user-select:none; }
+  #editorBand { cursor:crosshair; }
+  #editorBand.mode-pan { cursor:grab; }
+  #editorBand.mode-pan.grabbing { cursor:grabbing; }
+  .cell { background:var(--paper-2); }
+  #editorBand .cell { transition:background .1s ease; }
+  #editorBand .cell:hover { background:var(--grid-2); }
+
+  .overlaySel { position:absolute; background:var(--accent-dim); pointer-events:none; display:none; z-index:2; }
+  .overlaySel::after { content:""; position:absolute; inset:-1px;
+    background:
+      linear-gradient(90deg,var(--accent-deep) 50%,transparent 0) repeat-x,
+      linear-gradient(90deg,var(--accent-deep) 50%,transparent 0) repeat-x,
+      linear-gradient(0deg,var(--accent-deep) 50%,transparent 0) repeat-y,
+      linear-gradient(0deg,var(--accent-deep) 50%,transparent 0) repeat-y;
+    background-size:8px 2px,8px 2px,2px 8px,2px 8px;
+    background-position:0 0,0 100%,0 0,100% 0;
+    animation:ants .5s infinite linear;
+  }
+  @keyframes ants { to { background-position:8px 0,-8px 100%,0 -8px,100% 8px; } }
+  .artwork { position:absolute; overflow:hidden; display:none; outline:2px solid var(--accent); z-index:3; pointer-events:none; }
+  .artwork img { position:absolute; top:0; left:0; max-width:none; -webkit-user-drag:none; }
+  #artReel { outline:none; }
+
+  .hint { font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-top:14px; }
+
+  .card { background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); padding:14px; }
+  .card > .eyebrow { margin-bottom:12px; }
+
+  .intro { background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); padding:18px 20px; }
+  .intro-hi { font-family:var(--display); font-size:22px; font-weight:700; letter-spacing:.01em; }
+  .intro-lead { font-size:16px; font-weight:600; margin-top:8px; color:var(--ink); }
+  .intro-body { font-size:13.5px; color:var(--ink-soft); line-height:1.65; margin-top:9px; max-width:72ch; }
+  .intro-body b { color:var(--ink); font-weight:600; }
+  .intro .num { font-family:var(--mono); color:var(--accent-deep); font-weight:700; white-space:nowrap; }
+  .intro .go { color:var(--accent-deep); font-weight:700; }
+
+  .phone { width:186px; margin:2px auto 0; }
+  .reel { position:relative; width:100%; aspect-ratio:9/16; overflow:hidden; border:2px solid var(--ink); background:#20242b; }
+  .reel-bg { position:absolute; inset:0; cursor:pointer; }
+  .reel-bg img { width:100%; height:100%; object-fit:cover; object-position:center; transform:translateY(9%); display:block; }
+  .reel-ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:rgba(255,255,255,.5); background:linear-gradient(160deg,#3a3f49,#23262d); text-align:center; padding:0 16px; }
+  .reel-ph .ic { font-size:20px; }
+  .reel-ph .t { font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; line-height:1.5; }
+  .reel-bg.over .reel-ph { background:linear-gradient(160deg,#4a3a22,#2a2114); color:var(--accent); }
+  .reelBand { position:absolute; top:0; left:0; right:0; height:25%; display:grid; grid-template-columns:repeat(18,1fr); grid-template-rows:repeat(8,1fr); gap:.5px; background:#17130E; z-index:4; }
+  .reelBand .cell { background:#fff; }
+  .reel-flag { position:absolute; top:calc(25% + 3px); left:6px; font-family:var(--mono); font-size:8px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); z-index:5; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+  .reel-ui { position:absolute; left:9px; right:38px; bottom:11px; z-index:5; }
+  .reel-ui .h { height:7px; background:rgba(255,255,255,.4); border-radius:1px; }
+  .reel-ui .h + .h { margin-top:5px; width:58%; }
+  .reel-icons { position:absolute; right:8px; bottom:12px; display:flex; flex-direction:column; gap:10px; z-index:5; }
+  .reel-icons span { width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,.45); display:block; }
+  .reel-cap { font-family:var(--mono); font-size:10px; color:var(--muted); text-align:center; margin-top:9px; letter-spacing:.02em; }
+
+  .ticket { border:2px solid var(--ink); background:var(--paper); }
+  .ticket-top { display:flex; align-items:baseline; justify-content:space-between; padding:9px 12px; border-bottom:2px dashed var(--ink); }
+  .ticket-top .k { font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .ticket-top .v { font-family:var(--mono); font-size:15px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .ticket-body { padding:12px; }
+  .price { font-family:var(--mono); font-weight:700; font-size:31px; letter-spacing:-.01em; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1; word-break:break-all; }
+  .price .u { font-size:13px; color:var(--accent); font-weight:700; margin-left:6px; letter-spacing:.04em; }
+  .price-eur { font-family:var(--mono); font-size:13px; color:var(--blue); font-weight:700; margin-top:7px; font-variant-numeric:tabular-nums; }
+  .rate-note { font-size:11px; color:var(--muted); margin-top:12px; line-height:1.5; }
+
+  .drop { border:2px dashed var(--ink); padding:18px 12px; text-align:center; cursor:pointer; transition:background .12s; background:var(--paper); }
+  .drop:hover { background:var(--grid-2); }
+  .drop.armed { border-color:var(--accent-deep); background:var(--accent-dim); }
+  .drop.over { border-color:var(--accent-deep); background:var(--accent-dim); }
+  .drop.disabled { opacity:.4; cursor:not-allowed; }
+  .drop-t { font-size:13px; font-weight:600; }
+  .drop-s { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:5px; }
+
+  .ctl-row { display:flex; align-items:center; gap:12px; margin-bottom:13px; }
+  .ctl-row label { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); width:42px; }
+  .ctl-row input[type=range]{ -webkit-appearance:none; appearance:none; flex:1; height:4px; background:var(--ink); outline:none; }
+  .ctl-row input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; background:var(--accent); cursor:pointer; border:2px solid var(--ink); }
+  .ctl-row input[type=range]::-moz-range-thumb{ width:16px; height:16px; border:2px solid var(--ink); background:var(--accent); cursor:pointer; }
+  .ctl-val { font-family:var(--mono); font-size:11px; color:var(--ink); width:34px; text-align:right; }
+
+  .btns { display:flex; gap:9px; }
+  .btn { flex:1; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.02em; padding:9px 10px; border:2px solid var(--ink); background:var(--paper-2); color:var(--ink); cursor:pointer; box-shadow:3px 3px 0 var(--ink); transition:transform .05s, box-shadow .05s, background .12s; }
+  .btn:hover { background:var(--grid-2); }
+  .btn:active { transform:translate(3px,3px); box-shadow:0 0 0 var(--ink); }
+  .btn-primary { width:100%; font-family:var(--mono); font-size:14px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:13px; border:2px solid var(--ink); background:var(--accent); color:var(--ink); cursor:pointer; box-shadow:5px 5px 0 var(--ink); transition:transform .05s, box-shadow .05s, background .12s; }
+  .btn-primary:hover { background:var(--accent-deep); }
+  .btn-primary:active { transform:translate(5px,5px); box-shadow:0 0 0 var(--ink); }
+  .btn-primary:disabled { background:var(--grid); color:var(--faint); cursor:not-allowed; box-shadow:5px 5px 0 var(--faint); border-color:var(--faint); }
+
+  .foot { margin-top:26px; padding:14px 16px; border:2px solid var(--ink); background:var(--paper-2); font-size:11.5px; color:var(--ink-soft); line-height:1.6; }
+  .foot b { color:var(--ink); }
+
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--good); color:var(--ink); font-size:13px; padding:12px 16px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:340px; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast .tt { font-weight:700; }
+  .toast .ts { color:var(--muted); font-size:12px; margin-top:2px; }
+
+  .hidden { display:none !important; }
+  @media (prefers-reduced-motion: reduce){ .ss-app *{ transition:none !important; } .overlaySel::after{ animation:none; } }
+</style>
+</head>
+<body>
+<div class="ss-app">
+  <div class="ss-wrap">
+    <header class="ss-top">
+      <div class="ss-brand">
+        <div>
+          <div class="ss-word">Sat Space</div>
+          <div class="ss-sub">by <b>WeWill+</b></div>
+        </div>
+      </div>
+      <div class="ss-meta">
+        <div class="ss-counter"><span id="claimed">0</span> / 144 <span class="s">claimed</span></div>
+      </div>
+    </header>
+
+    <main class="ss-main">
+      <div class="col-left">
+        <section class="stage b-editor">
+        <div class="stage-head">
+          <div class="eyebrow">Be a part of all my reels</div>
+          <div class="stage-title">Grab your slot and place your vision.</div>
+        </div>
+
+        <div id="editorBand" class="band mode-select" role="application" aria-label="Ad slot grid, 18 columns by 8 rows">
+          <div class="overlaySel" id="selEditor"></div>
+          <div class="artwork" id="artEditor"><img alt="Your uploaded artwork"></div>
+        </div>
+
+        <p class="hint" id="hint">Click and drag to select a block of slots. One slot works, or grab a 2&times;2 for a bigger mark.</p>
+        </section>
+
+        <div class="intro b-intro">
+          <div class="intro-hi">Yoooo, welcome to Sat Space.</div>
+          <p class="intro-lead">Your chance to place your vision into my mission.</p>
+          <p class="intro-body">144 spaces up for grabs. One space is <span class="num">140,000 sats</span>. All of them together? <span class="num">20,000,000 sats</span>. A whole <span class="num">0.2 Bitcoin</span>.</p>
+          <p class="intro-body">Live for 2 months. The early birds get the most airtime.</p>
+          <p class="intro-body">If you missed it, I'm Dustin, on my way to earning 1 Bitcoin through content creation. Sat Space is Chapter 2. <span class="go">Let's go.</span></p>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="card b-preview">
+          <div class="eyebrow">Live preview</div>
+          <div class="phone">
+            <div class="reel">
+              <div class="reel-bg" id="reelBg" title="Drop your reel photo">
+                <img id="reelImg" src="ss_mock.jpg" alt="">
+                <div class="reel-ph" id="reelPh" style="display:none">
+                  <div class="ic" aria-hidden="true">&#9650;</div>
+                  <div class="t">drop your reel<br>photo here</div>
+                </div>
+              </div>
+              <div class="reelBand" id="reelBand" aria-hidden="true">
+                <div class="overlaySel" id="selReel"></div>
+                <div class="artwork" id="artReel"><img alt=""></div>
+              </div>
+              <div class="reel-flag">Sat Space</div>
+              <div class="reel-ui" aria-hidden="true"><div class="h"></div><div class="h"></div></div>
+              <div class="reel-icons" aria-hidden="true"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+          <div class="reel-cap">your logo, in the top band, over your reel</div>
+        </div>
+
+        <div class="card b-artwork">
+          <div class="eyebrow">Your artwork</div>
+          <div class="drop disabled" id="drop">
+            <div class="drop-t" id="dropT">Select slots first</div>
+            <div class="drop-s" id="dropS">then drop a logo or click to browse</div>
+          </div>
+          <input type="file" id="file" accept="image/*" class="hidden">
+
+          <div id="adjust" class="hidden" style="margin-top:14px;">
+            <div class="ctl-row">
+              <label for="zoom">Zoom</label>
+              <input type="range" id="zoom" min="1" max="4" step="0.01" value="1">
+              <span class="ctl-val" id="zoomVal">1.0&times;</span>
+            </div>
+            <div class="btns">
+              <button class="btn" id="btnReset" type="button">Recenter</button>
+              <button class="btn" id="btnRemove" type="button">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card b-selection">
+          <div class="eyebrow">Your selection</div>
+          <div class="ticket">
+            <div class="ticket-top"><span class="k">Slots</span><span class="v" id="slotCount">0</span></div>
+            <div class="ticket-body">
+              <div class="price"><span id="satsTotal">0</span><span class="u">sats</span></div>
+              <div class="price-eur" id="eurTotal">&euro;0.00</div>
+              <div class="rate-note">Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout. Ref: &euro;57,957 / BTC.</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary b-reserve" id="btnReserve" type="button" disabled>Reserve selection</button>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <b>Phase 1 of 3.</b> This is the interactive core: select, upload, position. Payments, saved slots across visitors, approval, and the reel export come next. Nothing here is charged.
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="tt" id="toastT"></div>
+    <div class="ts" id="toastS"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var COLS=18, ROWS=8, SATS=140000, RATE=57957;
+  var editor=document.getElementById('editorBand');
+  var reel=document.getElementById('reelBand');
+  var sel=null, art=null;
+  var nfSats=new Intl.NumberFormat('de-DE');
+  var nfEur=new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
+
+  function fillCells(band){ var f=document.createDocumentFragment(); for(var i=0;i<COLS*ROWS;i++){ var d=document.createElement('div'); d.className='cell'; f.appendChild(d); } band.insertBefore(f, band.firstChild); }
+  fillCells(editor); fillCells(reel);
+
+  var refs={
+    editor:{ art:document.getElementById('artEditor'), seln:document.getElementById('selEditor'), img:document.querySelector('#artEditor img') },
+    reel:{ art:document.getElementById('artReel'), seln:document.getElementById('selReel'), img:document.querySelector('#artReel img') }
+  };
+  var slotCountEl=document.getElementById('slotCount'), satsEl=document.getElementById('satsTotal'), eurEl=document.getElementById('eurTotal');
+  var drop=document.getElementById('drop'), dropT=document.getElementById('dropT'), dropS=document.getElementById('dropS'), fileInput=document.getElementById('file');
+  var adjust=document.getElementById('adjust'), zoom=document.getElementById('zoom'), zoomVal=document.getElementById('zoomVal');
+  var btnReset=document.getElementById('btnReset'), btnRemove=document.getElementById('btnRemove'), btnReserve=document.getElementById('btnReserve'), hint=document.getElementById('hint');
+
+  function slots(){ return sel ? (sel.c1-sel.c0+1)*(sel.r1-sel.r0+1) : 0; }
+  function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  function pct(v){ return v+'%'; }
+  function cellFromEvent(e){ var r=editor.getBoundingClientRect(); return { c:clamp(Math.floor((e.clientX-r.left)/r.width*COLS),0,COLS-1), r:clamp(Math.floor((e.clientY-r.top)/r.height*ROWS),0,ROWS-1) }; }
+
+  var down=false, mode='select', anchor=null, panStart=null;
+  editor.addEventListener('pointerdown', function(e){
+    editor.setPointerCapture(e.pointerId); down=true;
+    if(art){ mode='pan'; editor.classList.add('grabbing'); panStart={x:e.clientX,y:e.clientY,fpx:art.fpx,fpy:art.fpy}; }
+    else { mode='select'; var c=cellFromEvent(e); anchor=c; sel={c0:c.c,r0:c.r,c1:c.c,r1:c.r}; renderAll(); }
+  });
+  editor.addEventListener('pointermove', function(e){
+    if(!down) return;
+    if(mode==='select'){ var c=cellFromEvent(e); sel={c0:Math.min(anchor.c,c.c),r0:Math.min(anchor.r,c.r),c1:Math.max(anchor.c,c.c),r1:Math.max(anchor.r,c.r)}; renderAll(); }
+    else if(mode==='pan' && art){ var m=maxPan(refs.editor); art.fpx=clamp(panStart.fpx+(m.x>0?(e.clientX-panStart.x)/m.x:0),-1,1); art.fpy=clamp(panStart.fpy+(m.y>0?(e.clientY-panStart.y)/m.y:0),-1,1); renderArt(); }
+  });
+  function endDown(){ if(!down)return; down=false; editor.classList.remove('grabbing'); }
+  editor.addEventListener('pointerup', endDown); editor.addEventListener('pointercancel', endDown);
+
+  function maxPan(ref){ var lay=ref.art.getBoundingClientRect(); if(!art||lay.width===0) return {x:0,y:0,iw:0,ih:0}; var base=Math.max(lay.width/art.w, lay.height/art.h); var iw=art.w*base*art.z, ih=art.h*base*art.z; return { x:Math.max(0,(iw-lay.width)/2), y:Math.max(0,(ih-lay.height)/2), iw:iw, ih:ih }; }
+  function placeOverlay(ref){ var s=ref.seln; if(!sel){ s.style.display='none'; return; } s.style.left=pct(sel.c0/COLS*100); s.style.top=pct(sel.r0/ROWS*100); s.style.width=pct((sel.c1-sel.c0+1)/COLS*100); s.style.height=pct((sel.r1-sel.r0+1)/ROWS*100); s.style.display=art?'none':'block'; }
+  function placeArt(ref){ var a=ref.art; if(!art||!sel){ a.style.display='none'; return; } a.style.left=pct(sel.c0/COLS*100); a.style.top=pct(sel.r0/ROWS*100); a.style.width=pct((sel.c1-sel.c0+1)/COLS*100); a.style.height=pct((sel.r1-sel.r0+1)/ROWS*100); a.style.display='block'; var lay=a.getBoundingClientRect(); if(lay.width===0) return; var m=maxPan(ref); ref.img.src=art.img.src; ref.img.style.width=m.iw+'px'; ref.img.style.height=m.ih+'px'; ref.img.style.left=((lay.width-m.iw)/2 + art.fpx*m.x)+'px'; ref.img.style.top=((lay.height-m.ih)/2 + art.fpy*m.y)+'px'; }
+  function renderArt(){ placeArt(refs.editor); placeArt(refs.reel); }
+  function renderSel(){ placeOverlay(refs.editor); placeOverlay(refs.reel); }
+
+  function renderSummary(){
+    var n=slots(), s=n*SATS, e=s/1e8*RATE;
+    slotCountEl.textContent=n; satsEl.textContent=nfSats.format(s); eurEl.textContent=nfEur.format(e);
+    btnReserve.disabled=n===0;
+    if(art){ drop.classList.add('disabled'); drop.classList.remove('armed'); dropT.textContent='Artwork placed'; dropS.innerHTML='adjust it below, or remove to swap'; }
+    else if(n>0){ drop.classList.remove('disabled'); drop.classList.add('armed'); dropT.textContent='Drop your logo'; dropS.innerHTML='or click to browse &middot; PNG or JPG'; }
+    else { drop.classList.add('disabled'); drop.classList.remove('armed'); dropT.textContent='Select slots first'; dropS.innerHTML='then drop a logo or click to browse'; }
+    editor.classList.toggle('mode-pan', !!art); editor.classList.toggle('mode-select', !art);
+    hint.innerHTML = art ? 'Drag the artwork to reposition it. Use the zoom slider to fill the block.' : (n>0 ? 'Nice. Now drop a logo on the right, or drag again to change the block.' : 'Click and drag to select a block of slots. One slot works, or grab a 2&times;2 for a bigger mark.');
+  }
+  function renderAll(){ renderSel(); renderArt(); renderSummary(); }
+
+  function loadFile(f){
+    if(!f || !/^image\//.test(f.type)){ toast('That is not an image','Drop a PNG or JPG logo.'); return; }
+    if(!sel){ toast('Select slots first','Drag across the grid, then drop your logo.'); return; }
+    var rd=new FileReader();
+    rd.onload=function(){ var im=new Image(); im.onload=function(){ art={img:im,w:im.naturalWidth,h:im.naturalHeight,z:1,fpx:0,fpy:0}; zoom.value=1; zoomVal.textContent='1.0×'; adjust.classList.remove('hidden'); renderAll(); }; im.src=rd.result; };
+    rd.readAsDataURL(f);
+  }
+  drop.addEventListener('click', function(){ if(!drop.classList.contains('disabled')) fileInput.click(); });
+  fileInput.addEventListener('change', function(e){ if(e.target.files[0]) loadFile(e.target.files[0]); fileInput.value=''; });
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); if(!drop.classList.contains('disabled')) drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function(e){ if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+  ['dragover','drop'].forEach(function(ev){ editor.addEventListener(ev,function(e){ e.preventDefault(); if(ev==='drop'&&e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); }); });
+
+  var reelBg=document.getElementById('reelBg'), reelPh=document.getElementById('reelPh');
+  var reelFile=document.createElement('input'); reelFile.type='file'; reelFile.accept='image/*';
+  function loadReel(f){ if(!f||!/^image\//.test(f.type)){ toast('That is not an image','Drop a JPG or PNG photo.'); return; } var rd=new FileReader(); rd.onload=function(){ var img=reelBg.querySelector('img')||document.createElement('img'); img.src=rd.result; if(!img.parentNode) reelBg.insertBefore(img, reelPh); reelPh.style.display='none'; }; rd.readAsDataURL(f); }
+  reelBg.addEventListener('click', function(){ reelFile.click(); });
+  reelFile.addEventListener('change', function(e){ if(e.target.files[0]) loadReel(e.target.files[0]); reelFile.value=''; });
+  ['dragenter','dragover'].forEach(function(ev){ reelBg.addEventListener(ev,function(e){ e.preventDefault(); reelBg.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ reelBg.addEventListener(ev,function(e){ e.preventDefault(); reelBg.classList.remove('over'); }); });
+  reelBg.addEventListener('drop', function(e){ if(e.dataTransfer.files[0]) loadReel(e.dataTransfer.files[0]); });
+
+  zoom.addEventListener('input', function(){ if(!art)return; art.z=parseFloat(zoom.value); zoomVal.textContent=art.z.toFixed(1)+'×'; art.fpx=clamp(art.fpx,-1,1); art.fpy=clamp(art.fpy,-1,1); renderArt(); });
+  btnReset.addEventListener('click', function(){ if(!art)return; art.z=1; art.fpx=0; art.fpy=0; zoom.value=1; zoomVal.textContent='1.0×'; renderArt(); });
+  btnRemove.addEventListener('click', function(){ art=null; adjust.classList.add('hidden'); refs.editor.img.removeAttribute('src'); refs.reel.img.removeAttribute('src'); renderAll(); });
+  btnReserve.addEventListener('click', function(){ if(slots()===0)return; var n=slots(); toast('Selection reserved (demo)', n+(n===1?' slot':' slots')+' · '+nfSats.format(n*SATS)+' sats. Checkout arrives in phase 2.'); });
+
+  var toastEl=document.getElementById('toast'), tT=document.getElementById('toastT'), tS=document.getElementById('toastS'), tTimer;
+  function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },3400); }
+
+  if(window.ResizeObserver){ var ro=new ResizeObserver(function(){ renderSel(); renderArt(); }); ro.observe(editor); ro.observe(reel); }
+  window.addEventListener('resize', function(){ renderSel(); renderArt(); });
+  renderAll();
+})();
+</script>
+</body>
+</html>
