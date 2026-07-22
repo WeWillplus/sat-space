@@ -446,7 +446,7 @@
     var cells=[];
     for(var r=sel.r0;r<=sel.r1;r++){ for(var c=sel.c0;c<=sel.c1;c++){ cells.push({col:c,row:r}); } }
     btnReserve.disabled=true;
-    fetch('/api/reserve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cells:cells}) })
+    fetch('/api/reserve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cells:cells, artwork: art ? art.img.src : null}) })
       .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
       .then(function(res){
         if(res.ok){
