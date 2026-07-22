@@ -59,5 +59,21 @@ export async function onRequestPost(context) {
 
   const rows = await insertRes.json();
   const purchase = rows[0];
+
+  const linkRes = await fetch(env.SUPABASE_URL + '/rest/v1/slots?or=(' + orFilter + ')', {
+    method: 'PATCH',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify({ purchase_id: purchase.id })
+  });
+  if (!linkRes.ok) {
+    const detail = await linkRes.text();
+    return json({ error: 'Failed to link slots to purchase', detail: detail }, 502);
+  }
+
   return json({ purchaseId: purchase.id, slotCount: slotCount, satsAmount: satsAmount });
 }
