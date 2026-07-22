@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Overlay Export — Sat Space</title>
+<style>
+  body{margin:0;background:#ECECEA;color:#17130E;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;}
+  .wrap{max-width:640px;margin:0 auto;padding:40px 22px 60px;}
+  .box{background:#fff;border:2px solid #17130E;box-shadow:5px 5px 0 #17130E;padding:24px 26px;}
+  h1{font-size:20px;margin:0 0 6px;}
+  .sub{font-size:13px;color:#8A7F6B;margin-bottom:20px;}
+  .back{display:inline-block;margin-bottom:22px;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8A7F6B;text-decoration:none;}
+  .back:hover{color:#4A4136;text-decoration:underline;}
+
+  .preview-shell{
+    max-width:280px; margin:0 auto 18px; aspect-ratio:1080/1920;
+    background-image:linear-gradient(45deg,#ddd 25%,transparent 25%),linear-gradient(-45deg,#ddd 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ddd 75%),linear-gradient(-45deg,transparent 75%,#ddd 75%);
+    background-size:16px 16px; background-position:0 0,0 8px,8px -8px,-8px 0;
+    border:2px solid #17130E;
+  }
+  #exportCanvas{ width:100%; height:100%; display:block; }
+
+  .btns{display:flex; gap:10px; margin-top:16px;}
+  .btn{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace; font-size:12px; font-weight:700; letter-spacing:.02em; padding:10px 14px; border:2px solid #17130E; background:#fff; color:#17130E; cursor:pointer; box-shadow:3px 3px 0 #17130E;}
+  .btn:hover{background:#E5E5E1;}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-primary{background:#F7931A;}
+  .btn-primary:hover{background:#CF7409;}
+
+  #status{margin-top:18px; font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace; font-size:11.5px; color:#4A4136; white-space:pre-wrap; line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Back to Sat Space</a>
+  <div class="box">
+    <h1>Reel Overlay Export</h1>
+    <div class="sub">Composites every approved slot onto a transparent 1080&times;1920 PNG, positioned and scaled exactly as placed. Drop it straight onto your reel footage.</div>
+
+    <div class="preview-shell"><canvas id="exportCanvas" width="1080" height="1920"></canvas></div>
+
+    <div class="btns">
+      <button class="btn" id="btnRegen" type="button">Regenerate</button>
+      <button class="btn btn-primary" id="btnDownload" type="button" disabled>Download PNG</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var COLS=18, ROWS=8, CELL=60;
+  var canvas=document.getElementById('exportCanvas'), ctx=canvas.getContext('2d');
+  var statusEl=document.getElementById('status');
+  var btnRegen=document.getElementById('btnRegen'), btnDownload=document.getElementById('btnDownload');
+
+  function log(msg){ statusEl.textContent += msg + '\n'; }
+
+  function loadImage(src){
+    return new Promise(function(resolve,reject){
+      var img=new Image();
+      img.crossOrigin='anonymous';
+      img.onload=function(){ resolve(img); };
+      img.onerror=function(){ reject(new Error('Failed to load image: '+src)); };
+      img.src=src;
+    });
+  }
+
+  function drawPurchase(group){
+    var cols=group.cells.map(function(c){return c.col;}), rows=group.cells.map(function(c){return c.row;});
+    var c0=Math.min.apply(null,cols), c1=Math.max.apply(null,cols);
+    var r0=Math.min.apply(null,rows), r1=Math.max.apply(null,rows);
+    var rectX=c0*CELL, rectY=r0*CELL, rectW=(c1-c0+1)*CELL, rectH=(r1-r0+1)*CELL;
+    return loadImage(group.imageUrl).then(function(img){
+      var zoom=group.artZoom||1, ox=group.artOffsetX||0, oy=group.artOffsetY||0;
+      var base=Math.max(rectW/img.naturalWidth, rectH/img.naturalHeight);
+      var iw=img.naturalWidth*base*zoom, ih=img.naturalHeight*base*zoom;
+      var maxX=Math.max(0,(iw-rectW)/2), maxY=Math.max(0,(ih-rectH)/2);
+      var drawX=rectX + (rectW-iw)/2 + ox*maxX;
+      var drawY=rectY + (rectH-ih)/2 + oy*maxY;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rectX,rectY,rectW,rectH);
+      ctx.clip();
+      ctx.drawImage(img, drawX, drawY, iw, ih);
+      ctx.restore();
+      log('Placed purchase #'+group.purchaseId+' ('+group.cells.length+' slot'+(group.cells.length===1?'':'s')+')');
+    });
+  }
+
+  function generate(){
+    statusEl.textContent='';
+    btnDownload.disabled=true;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    log('Fetching approved slots...');
+    fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
+      var groups={};
+      list.forEach(function(s){
+        if(s.status==='approved' && s.purchaseId && s.imageUrl){
+          if(!groups[s.purchaseId]) groups[s.purchaseId]={ purchaseId:s.purchaseId, cells:[], imageUrl:s.imageUrl, artZoom:s.artZoom, artOffsetX:s.artOffsetX, artOffsetY:s.artOffsetY };
+          groups[s.purchaseId].cells.push({col:s.col,row:s.row});
+        }
+      });
+      var keys=Object.keys(groups);
+      log('Found '+keys.length+' approved purchase(s) to place.');
+      return Promise.all(keys.map(function(k){ return drawPurchase(groups[k]); }));
+    }).then(function(){
+      log('Done. Ready to download.');
+      btnDownload.disabled=false;
+    }).catch(function(err){
+      log('Error: '+err.message);
+    });
+  }
+
+  btnDownload.addEventListener('click', function(){
+    canvas.toBlob(function(blob){
+      if(!blob){ log('Export failed: could not create image (possible CORS issue with the image source).'); return; }
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url; a.download='sat-space-overlay-'+Date.now()+'.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  });
+
+  btnRegen.addEventListener('click', generate);
+  generate();
+})();
+</script>
+</body>
+</html>
