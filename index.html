@@ -434,13 +434,23 @@
       .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
       .then(function(res){
         if(res.ok){
-          toast('Reservation created', 'Purchase #'+res.data.purchaseId+' · '+nfSats.format(res.data.satsAmount)+' sats. Checkout arrives next.');
+          toast('Reservation created', 'Purchase #'+res.data.purchaseId+' · '+nfSats.format(res.data.satsAmount)+' sats. Taking you to checkout.');
+          return fetch('/api/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({purchaseId:res.data.purchaseId}) })
+            .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
+            .then(function(cres){
+              if(cres.ok && cres.data.checkoutUrl){ window.location.href = cres.data.checkoutUrl; }
+              else {
+                var cmsg=(cres.data.error || 'Something went wrong.')+(cres.data.detail?': '+cres.data.detail:'');
+                toast('Could not start checkout', cmsg);
+                btnReserve.disabled = slots()===0;
+              }
+            });
         } else {
           var msg=(res.data.error || 'Something went wrong. Try again.')+(res.data.detail?': '+res.data.detail:'');
           toast('Could not reserve', msg);
           if(res.data.error && res.data.error.indexOf('sold')>-1){ loadSlots(); }
+          btnReserve.disabled = slots()===0;
         }
-        btnReserve.disabled = slots()===0;
       })
       .catch(function(){ toast('Network error','Could not reach the server. Try again.'); btnReserve.disabled = slots()===0; });
   });
