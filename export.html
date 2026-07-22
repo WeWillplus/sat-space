@@ -57,8 +57,6 @@
   var canvas=document.getElementById('exportCanvas'), ctx=canvas.getContext('2d');
   var statusEl=document.getElementById('status');
   var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnGridAndSlots=document.getElementById('btnGridAndSlots'), btnDownload=document.getElementById('btnDownload');
-  var filenamePrefix='sat-space-overlay';
-
   function log(msg){ statusEl.textContent += msg + '\n'; }
 
   function drawGridLines(){
@@ -76,7 +74,6 @@
     statusEl.textContent='';
     btnDownload.disabled=true;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    filenamePrefix='sat-space-empty-grid';
     drawGridLines();
     log('Drew empty 18×8 grid. Ready to download.');
     btnDownload.disabled=false;
@@ -118,7 +115,6 @@
     statusEl.textContent='';
     btnDownload.disabled=true;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    filenamePrefix=includeGrid ? 'sat-space-grid-and-slots' : 'sat-space-overlay';
     if(includeGrid){ drawGridLines(); log('Drew grid base.'); }
     log('Fetching approved slots...');
     fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
@@ -140,12 +136,20 @@
     });
   }
 
+  function pad(n){ return n<10 ? '0'+n : ''+n; }
+  function timestampName(){
+    var d=new Date();
+    var datePart=pad(d.getFullYear()%100)+pad(d.getMonth()+1)+pad(d.getDate());
+    var timePart=pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+    return datePart+'__'+timePart+'__SatSpace.png';
+  }
+
   btnDownload.addEventListener('click', function(){
     canvas.toBlob(function(blob){
       if(!blob){ log('Export failed: could not create image (possible CORS issue with the image source).'); return; }
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');
-      a.href=url; a.download=filenamePrefix+'-'+Date.now()+'.png';
+      a.href=url; a.download=timestampName();
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     }, 'image/png');
