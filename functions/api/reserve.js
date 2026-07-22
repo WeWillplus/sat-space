@@ -81,6 +81,10 @@ export async function onRequestPost(context) {
     }
   }
 
+  const artZoom = typeof body.artZoom === 'number' ? body.artZoom : 1;
+  const artOffsetX = typeof body.artOffsetX === 'number' ? body.artOffsetX : 0;
+  const artOffsetY = typeof body.artOffsetY === 'number' ? body.artOffsetY : 0;
+
   const insertRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases', {
     method: 'POST',
     headers: {
@@ -89,7 +93,10 @@ export async function onRequestPost(context) {
       'Content-Type': 'application/json',
       Prefer: 'return=representation'
     },
-    body: JSON.stringify([{ slot_count: slotCount, sats_amount: satsAmount, status: 'pending', image_path: imagePath }])
+    body: JSON.stringify([{
+      slot_count: slotCount, sats_amount: satsAmount, status: 'pending', image_path: imagePath,
+      art_zoom: artZoom, art_offset_x: artOffsetX, art_offset_y: artOffsetY
+    }])
   });
   if (!insertRes.ok) {
     const detail = await insertRes.text();

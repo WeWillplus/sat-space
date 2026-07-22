@@ -62,6 +62,10 @@
   #editorBand .cell { transition:background .1s ease; }
   #editorBand .cell:hover:not(.sold) { background:var(--grid-2); }
   #editorBand .cell.sold { background:var(--faint); cursor:not-allowed; }
+  #editorBand .cell.sold.review { background:rgba(247,147,26,.38); cursor:not-allowed; }
+
+  .approved-art { position:absolute; overflow:hidden; pointer-events:none; z-index:1; }
+  .approved-art img { position:absolute; top:0; left:0; max-width:none; -webkit-user-drag:none; }
 
   .overlaySel { position:absolute; background:var(--accent-dim); pointer-events:none; display:none; z-index:2; }
   .overlaySel::after { content:""; position:absolute; inset:-1px;
@@ -344,19 +348,70 @@
 
   var editorCells=Array.prototype.slice.call(editor.querySelectorAll('.cell'));
   var soldSet=new Set();
+  var approvedOverlayEls=[];
   function cellIndex(c,r){ return r*COLS+c; }
   function isSold(c,r){ return soldSet.has(c+','+r); }
   function rectHasSold(c0,r0,c1,r1){ for(var r=r0;r<=r1;r++) for(var c=c0;c<=c1;c++) if(isSold(c,r)) return true; return false; }
+
+  function clearApprovedOverlays(){ approvedOverlayEls.forEach(function(el){ el.remove(); }); approvedOverlayEls=[]; }
+
+  function renderApprovedArt(container, natW, natH, zoom, ox, oy){
+    var lay=container.getBoundingClientRect();
+    if(lay.width===0||!natW||!natH) return;
+    var base=Math.max(lay.width/natW, lay.height/natH);
+    var iw=natW*base*zoom, ih=natH*base*zoom;
+    var maxX=Math.max(0,(iw-lay.width)/2), maxY=Math.max(0,(ih-lay.height)/2);
+    var img=container.querySelector('img');
+    img.style.width=iw+'px'; img.style.height=ih+'px';
+    img.style.left=((lay.width-iw)/2 + ox*maxX)+'px';
+    img.style.top=((lay.height-ih)/2 + oy*maxY)+'px';
+  }
+
+  function buildApprovedOverlay(group){
+    var cols=group.cells.map(function(c){return c.col;}), rows=group.cells.map(function(c){return c.row;});
+    var c0=Math.min.apply(null,cols), c1=Math.max.apply(null,cols);
+    var r0=Math.min.apply(null,rows), r1=Math.max.apply(null,rows);
+    var container=document.createElement('div');
+    container.className='approved-art';
+    container.style.left=pct(c0/COLS*100); container.style.top=pct(r0/ROWS*100);
+    container.style.width=pct((c1-c0+1)/COLS*100); container.style.height=pct((r1-r0+1)/ROWS*100);
+    container.dataset.zoom=group.artZoom||1; container.dataset.ox=group.artOffsetX||0; container.dataset.oy=group.artOffsetY||0;
+    var img=document.createElement('img'); img.alt='';
+    img.onload=function(){ renderApprovedArt(container, img.naturalWidth, img.naturalHeight, group.artZoom||1, group.artOffsetX||0, group.artOffsetY||0); };
+    img.src=group.imageUrl;
+    container.appendChild(img);
+    editor.appendChild(container);
+    approvedOverlayEls.push(container);
+  }
+
+  function refreshApprovedOverlaySizes(){
+    approvedOverlayEls.forEach(function(el){
+      var img=el.querySelector('img');
+      if(img.naturalWidth) renderApprovedArt(el, img.naturalWidth, img.naturalHeight, parseFloat(el.dataset.zoom), parseFloat(el.dataset.ox), parseFloat(el.dataset.oy));
+    });
+  }
+
   function markSold(list){
     soldSet.clear();
-    editorCells.forEach(function(el){ el.classList.remove('sold'); });
+    editorCells.forEach(function(el){ el.classList.remove('sold','review'); });
+    clearApprovedOverlays();
     if(!Array.isArray(list)) return;
+
+    var groups={};
     list.forEach(function(s){
       if(!s.is_sold) return;
       soldSet.add(s.col+','+s.row);
       var idx=cellIndex(s.col,s.row);
-      if(editorCells[idx]) editorCells[idx].classList.add('sold');
+      var cellEl=editorCells[idx];
+      if(cellEl) cellEl.classList.add('sold');
+      if(s.status==='approved' && s.purchaseId && s.imageUrl){
+        if(!groups[s.purchaseId]) groups[s.purchaseId]={ cells:[], imageUrl:s.imageUrl, artZoom:s.artZoom, artOffsetX:s.artOffsetX, artOffsetY:s.artOffsetY };
+        groups[s.purchaseId].cells.push({col:s.col,row:s.row});
+      } else if(cellEl){
+        cellEl.classList.add('review');
+      }
     });
+    Object.keys(groups).forEach(function(pid){ buildApprovedOverlay(groups[pid]); });
   }
   function loadSlots(){
     fetch('/api/slots').then(function(r){ return r.json(); }).then(markSold).catch(function(){ /* offline or first deploy without the endpoint yet, grid just stays empty */ });
@@ -446,7 +501,13 @@
     var cells=[];
     for(var r=sel.r0;r<=sel.r1;r++){ for(var c=sel.c0;c<=sel.c1;c++){ cells.push({col:c,row:r}); } }
     btnReserve.disabled=true;
-    fetch('/api/reserve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cells:cells, artwork: art ? art.img.src : null}) })
+    fetch('/api/reserve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+      cells:cells,
+      artwork: art ? art.img.src : null,
+      artZoom: art ? art.z : undefined,
+      artOffsetX: art ? art.fpx : undefined,
+      artOffsetY: art ? art.fpy : undefined
+    }) })
       .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
       .then(function(res){
         if(res.ok){
@@ -474,8 +535,8 @@
   var toastEl=document.getElementById('toast'), tT=document.getElementById('toastT'), tS=document.getElementById('toastS'), tTimer;
   function toast(t,s){ tT.textContent=t; tS.textContent=s; toastEl.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(function(){ toastEl.classList.remove('show'); },4200); }
 
-  if(window.ResizeObserver){ var ro=new ResizeObserver(function(){ renderSel(); renderArt(); }); ro.observe(editor); ro.observe(reel); }
-  window.addEventListener('resize', function(){ renderSel(); renderArt(); });
+  if(window.ResizeObserver){ var ro=new ResizeObserver(function(){ renderSel(); renderArt(); refreshApprovedOverlaySizes(); }); ro.observe(editor); ro.observe(reel); }
+  window.addEventListener('resize', function(){ renderSel(); renderArt(); refreshApprovedOverlaySizes(); });
   renderAll();
 })();
 </script>
