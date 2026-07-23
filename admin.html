@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Queue — Sat Space</title>
+<style>
+  body{margin:0;background:#ECECEA;color:#17130E;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;}
+  .wrap{max-width:720px;margin:0 auto;padding:40px 22px 60px;}
+  .back{display:inline-block;margin-bottom:22px;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8A7F6B;text-decoration:none;}
+  .back:hover{color:#4A4136;text-decoration:underline;}
+  h1{font-size:22px;margin:0 0 6px;}
+  .sub{font-size:13px;color:#8A7F6B;margin-bottom:22px;}
+  .card{background:#fff;border:2px solid #17130E;box-shadow:5px 5px 0 #17130E;padding:18px 20px;margin-bottom:18px;display:flex;gap:16px;}
+  .thumb{width:120px;height:120px;flex-shrink:0;border:2px solid #17130E;background:repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 50%/16px 16px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain;}
+  .thumb .none{font-family:ui-monospace,monospace;font-size:10px;color:#8A7F6B;text-align:center;padding:8px;}
+  .info{flex:1;min-width:0;}
+  .info .id{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;color:#8A7F6B;letter-spacing:.04em;text-transform:uppercase;}
+  .info .amount{font-size:16px;font-weight:700;margin-top:2px;}
+  .info .meta{font-size:12.5px;color:#4A4136;margin-top:4px;}
+  .btns{display:flex;gap:8px;margin-top:12px;}
+  .btn{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:8px 12px;border:2px solid #17130E;cursor:pointer;box-shadow:3px 3px 0 #17130E;background:#fff;color:#17130E;}
+  .btn:hover{background:#E5E5E1;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-approve{background:#2E9E6B;color:#fff;}
+  .btn-approve:hover{background:#25835A;}
+  .btn-reject{background:#fff;}
+  .btn-reject:hover{background:#F7E3D8;}
+  .empty{font-size:13.5px;color:#8A7F6B;padding:20px 0;}
+  #status{margin-top:14px;font-family:ui-monospace,monospace;font-size:11.5px;color:#4A4136;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Back to Sat Space</a>
+  <h1>Review Queue</h1>
+  <div class="sub">Purchases sitting at "paid," waiting for a decision. Approving reveals the artwork on the live site, rejecting does not automatically reopen or refund the slot.</div>
+  <div id="list"></div>
+  <div id="status"></div>
+</div>
+
+<script>
+(function(){
+  var listEl = document.getElementById('list');
+  var statusEl = document.getElementById('status');
+
+  function log(msg){ statusEl.textContent = msg; }
+
+  function fmtCells(cells){
+    if(!cells || cells.length === 0) return 'no linked slots';
+    return cells.map(function(c){ return '(' + c.col + ',' + c.row + ')'; }).join(', ');
+  }
+
+  function render(items){
+    listEl.innerHTML = '';
+    if(items.length === 0){
+      listEl.innerHTML = '<div class="empty">Nothing waiting for review right now.</div>';
+      return;
+    }
+    items.forEach(function(item){
+      var card = document.createElement('div');
+      card.className = 'card';
+
+      var thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      if(item.imageUrl){
+        var img = document.createElement('img');
+        img.src = item.imageUrl;
+        img.alt = '';
+        thumb.appendChild(img);
+      } else {
+        var none = document.createElement('div');
+        none.className = 'none';
+        none.textContent = 'NO ARTWORK UPLOADED';
+        thumb.appendChild(none);
+      }
+
+      var info = document.createElement('div');
+      info.className = 'info';
+      info.innerHTML =
+        '<div class="id">Purchase #' + item.purchaseId + '</div>' +
+        '<div class="amount">' + item.slotCount + (item.slotCount === 1 ? ' slot' : ' slots') + ' &middot; ' + item.satsAmount + ' sats &middot; &euro;' + (item.eurAmount != null ? item.eurAmount : '?') + '</div>' +
+        '<div class="meta">Cells: ' + fmtCells(item.cells) + '</div>' +
+        '<div class="meta">Buyer: ' + (item.email || 'no email on file') + '</div>';
+
+      var btns = document.createElement('div');
+      btns.className = 'btns';
+      var approveBtn = document.createElement('button');
+      approveBtn.className = 'btn btn-approve';
+      approveBtn.type = 'button';
+      approveBtn.textContent = 'Approve';
+      var rejectBtn = document.createElement('button');
+      rejectBtn.className = 'btn btn-reject';
+      rejectBtn.type = 'button';
+      rejectBtn.textContent = 'Reject';
+
+      function act(action){
+        approveBtn.disabled = true; rejectBtn.disabled = true;
+        fetch('/api/admin/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ purchaseId: item.purchaseId, action: action })
+        })
+          .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+          .then(function(res){
+            if(res.ok){
+              log('Purchase #' + item.purchaseId + ' marked ' + res.data.status + '.');
+              load();
+            } else {
+              log('Error: ' + (res.data.error || 'something went wrong'));
+              approveBtn.disabled = false; rejectBtn.disabled = false;
+            }
+          })
+          .catch(function(){
+            log('Network error, could not reach the server.');
+            approveBtn.disabled = false; rejectBtn.disabled = false;
+          });
+      }
+
+      approveBtn.addEventListener('click', function(){ act('approve'); });
+      rejectBtn.addEventListener('click', function(){ act('reject'); });
+
+      btns.appendChild(approveBtn);
+      btns.appendChild(rejectBtn);
+      info.appendChild(btns);
+
+      card.appendChild(thumb);
+      card.appendChild(info);
+      listEl.appendChild(card);
+    });
+  }
+
+  function load(){
+    fetch('/api/admin/queue')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(Array.isArray(data)) { render(data); log(''); }
+        else { log('Error: ' + (data.error || 'failed to load queue')); }
+      })
+      .catch(function(){ log('Network error, could not reach the server.'); });
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
