@@ -4,6 +4,11 @@ function json(obj, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'content-type': 'application/json' } });
 }
 
+function isValidId(v) {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0;
+}
+
 function hex(buffer) {
   return Array.prototype.map.call(new Uint8Array(buffer), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
@@ -59,8 +64,9 @@ async function handle(context) {
   }
 
   const session = event.data.object;
-  const purchaseId = session.metadata && session.metadata.purchase_id;
-  if (!purchaseId) return json({ error: 'Missing purchase_id in session metadata' }, 400);
+  const rawPurchaseId = session.metadata && session.metadata.purchase_id;
+  if (!isValidId(rawPurchaseId)) return json({ error: 'Missing or invalid purchase_id in session metadata' }, 400);
+  const purchaseId = Number(rawPurchaseId);
 
   const email = session.customer_details && session.customer_details.email;
 

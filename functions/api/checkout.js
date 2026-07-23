@@ -2,6 +2,11 @@ function json(obj, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'content-type': 'application/json' } });
 }
 
+function isValidId(v) {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0;
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -9,8 +14,8 @@ export async function onRequestPost(context) {
   try { body = await request.json(); }
   catch (e) { return json({ error: 'Invalid request body' }, 400); }
 
-  const purchaseId = body.purchaseId;
-  if (!purchaseId) return json({ error: 'Missing purchaseId' }, 400);
+  if (!isValidId(body.purchaseId)) return json({ error: 'Missing or invalid purchaseId' }, 400);
+  const purchaseId = Number(body.purchaseId);
 
   const purRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases?id=eq.' + purchaseId + '&select=id,slot_count,sats_amount,status', {
     headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY }
