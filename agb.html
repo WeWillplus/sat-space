@@ -8,21 +8,272 @@
   body{margin:0;background:#ECECEA;color:#17130E;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;}
   .wrap{max-width:640px;margin:0 auto;padding:40px 22px 60px;}
   .box{background:#fff;border:2px solid #17130E;box-shadow:5px 5px 0 #17130E;padding:24px 26px;}
-  h1{font-size:22px;margin:0 0 14px;}
-  p{font-size:14px;color:#4A4136;}
+  h1{font-size:22px;margin:0 0 4px;}
+  h2{font-size:14px;margin:24px 0 6px;}
+  h3{font-size:13px;margin:16px 0 4px;}
+  p,li{font-size:14px;color:#4A4136;}
+  ul{padding-left:20px;margin:6px 0;}
   .back{display:inline-block;margin-bottom:22px;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8A7F6B;text-decoration:none;}
   .back:hover{color:#4A4136;text-decoration:underline;}
-  .pending{margin-top:18px;padding:12px 14px;border:2px dashed #B3A891;font-size:12.5px;color:#8A7F6B;}
+  .pending{margin-top:22px;padding:12px 14px;border:2px dashed #B3A891;font-size:12.5px;color:#8A7F6B;}
+  .meta{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#8A7F6B;margin:0 0 18px;}
+  a{color:#2C5AA0;}
+  .langbar{display:flex;gap:0;margin-bottom:20px;border:2px solid #17130E;width:max-content;}
+  .langbar button{appearance:none;border:0;background:#fff;color:#8A7F6B;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 16px;cursor:pointer;}
+  .langbar button+button{border-left:2px solid #17130E;}
+  .langbar button[aria-pressed="true"]{background:#17130E;color:#ECECEA;}
+  .form{margin-top:10px;padding:14px 16px;border:2px solid #B3A891;background:#F7F6F3;}
+  /* English shows by default, so the terms are still readable if the script
+     never runs. The class below is what swaps the page to German. */
+  [data-lang="en"]{display:block;}
+  [data-lang="de"]{display:none;}
+  .lang-de [data-lang="en"]{display:none;}
+  .lang-de [data-lang="de"]{display:block;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="index.html">&larr; Back to Sat Space</a>
   <div class="box">
-    <h1>Allgemeine Gesch&auml;ftsbedingungen</h1>
-    <p>Terms and conditions covering slot purchases, content rules, approval process, and refund policy for Sat Space.</p>
-    <div class="pending">This page is a placeholder. The final terms are being prepared with a legal advisor before Sat Space accepts any real payments.</div>
+
+    <div class="langbar">
+      <button type="button" id="btn-de" aria-pressed="false">Deutsch</button>
+      <button type="button" id="btn-en" aria-pressed="false">English</button>
+    </div>
+
+    <!-- ================================ DEUTSCH ================================ -->
+    <div data-lang="de">
+      <h1>Allgemeine Geschäftsbedingungen</h1>
+      <p class="meta">Sat Space &middot; Stand: 11. August 2026</p>
+
+      <h2>1. Anbieter und Geltungsbereich</h2>
+      <p>Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge über den Kauf von Werbeplätzen auf der Website Sat Space (satspace.wewillplus.com) zwischen Dustin Williamson, Linzer Gasse 10, 5020 Salzburg, Österreich, E-Mail dustin@wewillplus.com (nachfolgend „Anbieter") und dem Käufer.</p>
+      <p>Verbraucher ist jede natürliche Person, die den Vertrag zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können. Unternehmer ist, wer nicht Verbraucher ist. Bestimmungen, die ausdrücklich nur für Verbraucher oder nur für Unternehmer gelten, sind als solche gekennzeichnet.</p>
+      <p>Abweichende Bedingungen des Käufers werden nicht Vertragsbestandteil, sofern der Anbieter ihnen nicht ausdrücklich schriftlich zustimmt.</p>
+
+      <h2>2. Vertragsgegenstand</h2>
+      <p>Der Anbieter stellt in seinen Kurzvideos („Reels") eine Werbefläche im oberen Bereich des Bildes bereit. Diese Fläche ist in ein Raster von 144 gleich großen Feldern („Slots") unterteilt. Der Käufer erwirbt das Recht, in einem oder mehreren zusammenhängenden Slots ein statisches Bild für die Dauer der Kampagne anzeigen zu lassen.</p>
+      <p>Es handelt sich um eine Dienstleistung, nicht um den Kauf einer Ware.</p>
+
+      <h2>3. Vertragsschluss</h2>
+      <p>Die Darstellung der Slots auf der Website ist kein bindendes Angebot, sondern eine Aufforderung zur Abgabe eines Angebots. Der Käufer gibt sein Angebot ab, indem er Slots auswählt, sein Werbemittel hochlädt und den Bezahlvorgang abschließt. Der Vertrag kommt mit der Bestätigung der Zahlung zustande.</p>
+      <p>Die Freigabe des Werbemittels nach Punkt 6 ist nicht Voraussetzung für das Zustandekommen des Vertrags, sondern eine gesondert geregelte Bedingung für dessen Durchführung.</p>
+
+      <h2>4. Preise, Zahlung und Rechnung</h2>
+      <p>Ein Slot kostet 140.000 Satoshi. Der Preis ist für die gesamte Kampagne in Satoshi festgelegt. Die Zahlung erfolgt in Euro. Der Euro-Betrag wird im Moment des Bezahlvorgangs anhand eines aktuellen, serverseitig ermittelten BTC/EUR-Kurses berechnet und für diesen Kauf fixiert. Spätere Kursänderungen berühren den bezahlten Betrag nicht und begründen weder Nachforderungen noch Rückforderungen.</p>
+      <p>Die Zahlungsabwicklung erfolgt über Stripe. Für jeden Kauf wird automatisch eine nummerierte Rechnung erstellt.</p>
+      <p>Der Anbieter ist Kleinunternehmer im Sinne des § 6 Abs 1 Z 27 UStG. Es wird keine Umsatzsteuer ausgewiesen und keine in Rechnung gestellt.</p>
+
+      <h2>5. Kampagnenzeitraum</h2>
+      <p>Die Kampagne läuft zwei Monate ab dem auf der Website bekannt gegebenen Startdatum und endet für alle Käufer am selben Tag, unabhängig vom Zeitpunkt des jeweiligen Kaufs. Ein früherer Kauf führt daher zu einer längeren Anzeigedauer, ein späterer zu einer kürzeren. Der Preis pro Slot bleibt davon unberührt.</p>
+      <p>Startdatum der Kampagne: <strong>[STARTDATUM EINSETZEN]</strong>. Enddatum der Kampagne: <strong>[ENDDATUM EINSETZEN]</strong>.</p>
+
+      <h2>6. Prüfung und Freigabe</h2>
+      <p>Jedes Werbemittel wird vom Anbieter persönlich geprüft. Der Anbieter ist bemüht, die Prüfung innerhalb von zwei Stunden nach Zahlungseingang durchzuführen, jedenfalls erfolgt sie innerhalb von zwei Werktagen.</p>
+      <p>Wird das Werbemittel freigegeben, wird der Slot ab dem Kampagnenstart bzw. ab der Freigabe angezeigt, je nachdem, welcher Zeitpunkt später liegt.</p>
+      <p>Wird das Werbemittel abgelehnt, werden die betroffenen Slots wieder freigegeben und der Kaufpreis abzüglich einer Bearbeitungspauschale von 40 Euro rückerstattet. Diese Pauschale deckt die bereits erbrachte Prüfung, die manuelle Abwicklung der Rückerstattung und die dem Anbieter verbleibenden Zahlungsdienstleistergebühren. Dem Käufer steht der Nachweis frei, dass ein Schaden überhaupt nicht entstanden oder wesentlich niedriger ist als die Pauschale.</p>
+
+      <h2>7. Inhaltliche Anforderungen an Werbemittel</h2>
+      <p>Nicht zugelassen sind insbesondere:</p>
+      <ul>
+        <li>Betrugsversuche, irreführende oder unseriöse Angebote</li>
+        <li>Kryptowährungen, Token und Projekte außerhalb von Bitcoin sowie vergleichbare spekulative Angebote</li>
+        <li>politische Inhalte jeder Art</li>
+        <li>pornografische oder sexuell explizite Inhalte</li>
+        <li>Gewaltdarstellungen, Hetze, Diskriminierung oder Herabwürdigung von Personen oder Gruppen</li>
+        <li>Inhalte, die gegen geltendes Recht oder gegen die Richtlinien der Plattformen verstoßen, auf denen die Reels veröffentlicht werden</li>
+      </ul>
+      <p>Technische Anforderungen: statisches Bild im Format PNG, JPEG oder WEBP, maximal 5 MB. Bewegte Inhalte, Ton und interaktive Elemente sind nicht möglich.</p>
+      <p>Die Entscheidung über die Freigabe trifft der Anbieter nach billigem Ermessen. Ein Anspruch auf Freigabe besteht nicht.</p>
+
+      <h2>8. Rechte am Werbemittel</h2>
+      <p>Der Käufer sichert zu, dass er über alle erforderlichen Rechte am hochgeladenen Werbemittel verfügt, insbesondere Urheber-, Marken- und Persönlichkeitsrechte, und dass dessen Veröffentlichung keine Rechte Dritter verletzt.</p>
+      <p>Der Käufer räumt dem Anbieter das nicht ausschließliche, räumlich unbeschränkte Recht ein, das Werbemittel für die Dauer der Kampagne in dessen Inhalten öffentlich zugänglich zu machen, zu vervielfältigen und zu verbreiten, einschließlich der Speicherung in Archivfassungen bereits veröffentlichter Inhalte über das Kampagnenende hinaus.</p>
+      <p>Der Käufer hält den Anbieter von Ansprüchen Dritter frei, die aus einer Verletzung dieser Zusicherung entstehen.</p>
+
+      <h2>9. Umfang der Leistung und Vorbehalte</h2>
+      <p>Der Anbieter schuldet die Anzeige des Werbemittels in den von ihm während des Kampagnenzeitraums veröffentlichten Reels.</p>
+      <p>Ausdrücklich <strong>nicht</strong> geschuldet sind:</p>
+      <ul>
+        <li>eine bestimmte Anzahl an Aufrufen, Reichweiten, Impressionen, Klicks oder Interaktionen</li>
+        <li>eine bestimmte Anzahl oder Frequenz veröffentlichter Reels</li>
+        <li>eine bestimmte Verweildauer einzelner Beiträge auf einer Plattform</li>
+      </ul>
+      <p>Der Anbieter verpflichtet sich, seine Inhalte während des Kampagnenzeitraums im Wesentlichen im bisherigen Charakter fortzuführen, das heißt persönlicher Lebensstil, Fitness und Mindset, betrachtet durch eine Bitcoin-Perspektive. Politische Inhalte werden nicht veröffentlicht. Eine darüber hinausgehende Festlegung auf bestimmte Themen, Formate oder Veröffentlichungszeitpunkte erfolgt nicht.</p>
+      <p>Die Reels werden auf mehreren Plattformen veröffentlicht. Der Anbieter hat keinen Einfluss auf deren Algorithmen, Richtlinien oder Verfügbarkeit.</p>
+
+      <h2>10. Änderungen des Werbemittels</h2>
+      <p>Ein Austausch oder eine Änderung des Werbemittels nach Freigabe ist nicht möglich. Ebenso ist ein Wechsel der Position innerhalb des Rasters ausgeschlossen.</p>
+
+      <h2>11. Störungen und Ausfälle</h2>
+      <p><strong>Entfernung einzelner Beiträge.</strong> Wird ein einzelnes Reel von einer Plattform entfernt, eingeschränkt oder in seiner Sichtbarkeit reduziert, begründet dies keinen Anspruch auf Rückerstattung, Minderung oder Verlängerung. Dieses Risiko trägt der Käufer.</p>
+      <p><strong>Sperre des Kontos.</strong> Wird das Konto des Anbieters während des Kampagnenzeitraums dauerhaft gesperrt und ist ihm die Fortführung der Kampagne dadurch unmöglich, erstattet der Anbieter allen betroffenen Käufern den Kaufpreis zurück.</p>
+      <p><strong>Einstellung der Veröffentlichung aus persönlichen Gründen.</strong> Stellt der Anbieter die Veröffentlichung aus gesundheitlichen oder persönlichen Gründen ein, besteht kein Anspruch auf Rückerstattung.</p>
+
+      <h2>12. Haftung</h2>
+      <p>Der Anbieter haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit sowie für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.</p>
+      <p>Für leichte Fahrlässigkeit haftet der Anbieter gegenüber Unternehmern nicht. Gegenüber Verbrauchern bleibt die Haftung für leichte Fahrlässigkeit bei Personenschäden sowie in den gesetzlich zwingend vorgesehenen Fällen unberührt.</p>
+      <p>Für Inhalte, die der Käufer bereitstellt, haftet der Käufer.</p>
+
+      <h2>13. Widerrufsrecht für Verbraucher</h2>
+      <p>Verbrauchern steht ein gesetzliches Widerrufsrecht zu.</p>
+
+      <h3>Widerrufsbelehrung</h3>
+      <p><strong>Widerrufsrecht.</strong> Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.</p>
+      <p><strong>Ausübung.</strong> Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Dustin Williamson, Linzer Gasse 10, 5020 Salzburg, Österreich, dustin@wewillplus.com) mittels einer eindeutigen Erklärung, etwa per E-Mail, über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das untenstehende Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist. Zur Wahrung der Frist genügt es, dass Sie die Mitteilung vor Ablauf der Frist absenden.</p>
+      <p><strong>Folgen des Widerrufs.</strong> Wenn Sie diesen Vertrag widerrufen, erstatten wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag, an dem die Mitteilung über Ihren Widerruf bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart. In keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet.</p>
+      <p><strong>Vorzeitiger Beginn der Dienstleistung.</strong> Haben Sie verlangt, dass die Dienstleistung während der Widerrufsfrist beginnen soll, so haben Sie uns einen angemessenen Betrag zu zahlen, der dem Anteil der bis zum Widerruf bereits erbrachten Leistung im Vergleich zum Gesamtumfang der vertraglich vereinbarten Leistung entspricht. Dieser Anteil wird taggenau nach der Zahl der Kampagnentage berechnet, an denen Ihr Werbemittel angezeigt wurde.</p>
+      <p>Mit dem Abschluss des Bezahlvorgangs verlangt der Käufer ausdrücklich, dass die Kampagne bereits vor Ablauf der Widerrufsfrist beginnt, sofern der Kampagnenzeitraum zu diesem Zeitpunkt bereits läuft, und nimmt die vorstehende anteilige Zahlungspflicht zur Kenntnis.</p>
+
+      <h3>Muster-Widerrufsformular</h3>
+      <div class="form">
+        <p>An Dustin Williamson, Linzer Gasse 10, 5020 Salzburg, Österreich, dustin@wewillplus.com:</p>
+        <p>Hiermit widerrufe(n) ich/wir den von mir/uns abgeschlossenen Vertrag über den Kauf von Werbeplätzen auf Sat Space.</p>
+        <p>Bestellt am: ______________<br>Name des/der Verbraucher(s): ______________<br>Anschrift des/der Verbraucher(s): ______________<br>Bestell- oder Rechnungsnummer: ______________<br>Datum: ______________<br>Unterschrift (nur bei Mitteilung auf Papier): ______________</p>
+      </div>
+
+      <h2>14. Datenschutz</h2>
+      <p>Informationen zur Verarbeitung personenbezogener Daten finden sich in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
+
+      <h2>15. Schlussbestimmungen</h2>
+      <p>Es gilt österreichisches Recht unter Ausschluss der Verweisungsnormen des internationalen Privatrechts. Gegenüber Verbrauchern gilt diese Rechtswahl nur insoweit, als dadurch der Schutz nicht entzogen wird, der durch zwingende Bestimmungen des Rechts des Staates gewährt wird, in dem der Verbraucher seinen gewöhnlichen Aufenthalt hat.</p>
+      <p>Für Streitigkeiten mit Unternehmern ist das sachlich zuständige Gericht in Salzburg, Österreich, ausschließlich zuständig. Für Verbraucher gelten die gesetzlichen Gerichtsstände.</p>
+      <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>. Der Anbieter ist zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle weder verpflichtet noch bereit.</p>
+      <p>Sollte eine Bestimmung dieser AGB unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</p>
+      <p>Maßgeblich ist die deutschsprachige Fassung dieser AGB. Die englische Fassung ist eine Übersetzung zur Erleichterung des Verständnisses.</p>
+
+      <div class="pending">Diese Fassung wurde noch nicht anwaltlich geprüft. Die endgültigen Bedingungen werden vor Annahme echter Zahlungen mit einem Rechtsberater finalisiert.</div>
+    </div>
+
+    <!-- ================================ ENGLISH ================================ -->
+    <div data-lang="en">
+      <h1>Terms and Conditions</h1>
+      <p class="meta">Sat Space &middot; Version of 11 August 2026</p>
+
+      <h2>1. Provider and scope</h2>
+      <p>These Terms and Conditions govern all contracts for the purchase of advertising space on the Sat Space website (satspace.wewillplus.com) between Dustin Williamson, Linzer Gasse 10, 5020 Salzburg, Austria, email dustin@wewillplus.com (the "Provider") and the buyer.</p>
+      <p>A consumer is any natural person entering into the contract for purposes that are predominantly outside their trade, business or profession. An entrepreneur is anyone who is not a consumer. Provisions that apply only to consumers or only to entrepreneurs are marked as such.</p>
+      <p>Differing terms proposed by the buyer do not become part of the contract unless the Provider expressly agrees to them in writing.</p>
+
+      <h2>2. Subject of the contract</h2>
+      <p>The Provider makes advertising space available in the upper area of the frame in his short-form videos ("reels"). This area is divided into a grid of 144 equally sized fields ("slots"). The buyer acquires the right to have a static image displayed in one or more adjacent slots for the duration of the campaign.</p>
+      <p>This is a service, not the purchase of goods.</p>
+
+      <h2>3. Conclusion of contract</h2>
+      <p>The display of slots on the website is not a binding offer but an invitation to make one. The buyer makes an offer by selecting slots, uploading artwork and completing the payment process. The contract is concluded upon confirmation of payment.</p>
+      <p>Approval of the artwork under clause 6 is not a condition for the contract coming into existence, but a separately governed condition for its performance.</p>
+
+      <h2>4. Prices, payment and invoicing</h2>
+      <p>One slot costs 140,000 satoshi. The price is fixed in satoshi for the entire campaign. Payment is made in euro. The euro amount is calculated at the moment of checkout using a current BTC/EUR rate determined server-side, and is fixed for that purchase. Subsequent movements in the exchange rate do not affect the amount paid and give rise to neither additional claims nor refunds.</p>
+      <p>Payment is processed by Stripe. A numbered invoice is generated automatically for every purchase.</p>
+      <p>The Provider is a small business within the meaning of § 6 para 1 no 27 of the Austrian VAT Act. No VAT is shown and none is charged.</p>
+
+      <h2>5. Campaign period</h2>
+      <p>The campaign runs for two months from the start date announced on the website and ends on the same day for all buyers, regardless of when they purchased. Buying earlier therefore results in a longer display period, buying later in a shorter one. The price per slot is unaffected.</p>
+      <p>Campaign start date: <strong>[INSERT START DATE]</strong>. Campaign end date: <strong>[INSERT END DATE]</strong>.</p>
+
+      <h2>6. Review and approval</h2>
+      <p>Every piece of artwork is reviewed personally by the Provider. The Provider aims to complete the review within two hours of receipt of payment, and will in any event complete it within two business days.</p>
+      <p>If the artwork is approved, the slot is displayed from the start of the campaign or from approval, whichever is later.</p>
+      <p>If the artwork is rejected, the affected slots are released again and the purchase price is refunded less a handling fee of 40 euro. This fee covers the review already carried out, the manual processing of the refund, and the payment processor fees that the Provider does not recover. The buyer is free to demonstrate that no loss was incurred or that it was substantially lower than the fee.</p>
+
+      <h2>7. Content requirements for artwork</h2>
+      <p>The following are not permitted:</p>
+      <ul>
+        <li>fraudulent, misleading or disreputable offers</li>
+        <li>cryptocurrencies, tokens and projects other than Bitcoin, and comparable speculative offerings</li>
+        <li>political content of any kind</li>
+        <li>pornographic or sexually explicit content</li>
+        <li>depictions of violence, incitement, discrimination or disparagement of persons or groups</li>
+        <li>content that breaches applicable law or the policies of the platforms on which the reels are published</li>
+      </ul>
+      <p>Technical requirements: a static image in PNG, JPEG or WEBP format, maximum 5 MB. Motion, sound and interactive elements are not possible.</p>
+      <p>The Provider decides on approval at his reasonable discretion. There is no entitlement to approval.</p>
+
+      <h2>8. Rights in the artwork</h2>
+      <p>The buyer warrants that they hold all rights necessary for the uploaded artwork, in particular copyright, trade mark and personality rights, and that its publication infringes no third-party rights.</p>
+      <p>The buyer grants the Provider the non-exclusive, territorially unrestricted right to make the artwork publicly available, reproduce and distribute it within his content for the duration of the campaign, including its retention in archived versions of already published content beyond the end of the campaign.</p>
+      <p>The buyer indemnifies the Provider against third-party claims arising from a breach of this warranty.</p>
+
+      <h2>9. Scope of performance and reservations</h2>
+      <p>The Provider owes the display of the artwork in the reels he publishes during the campaign period.</p>
+      <p>The following are expressly <strong>not</strong> owed:</p>
+      <ul>
+        <li>any particular number of views, reach, impressions, clicks or interactions</li>
+        <li>any particular number or frequency of published reels</li>
+        <li>any particular length of time that an individual post remains on a platform</li>
+      </ul>
+      <p>The Provider undertakes to continue his content during the campaign period substantially in its existing character, namely personal lifestyle, fitness and mindset viewed through a Bitcoin lens. No political content will be published. Beyond this, no commitment is made to particular topics, formats or publication times.</p>
+      <p>The reels are published on several platforms. The Provider has no influence over their algorithms, policies or availability.</p>
+
+      <h2>10. Changes to artwork</h2>
+      <p>Artwork cannot be exchanged or altered after approval. Changing position within the grid is likewise excluded.</p>
+
+      <h2>11. Disruptions and failures</h2>
+      <p><strong>Removal of individual posts.</strong> If an individual reel is removed, restricted or reduced in visibility by a platform, this gives rise to no claim to a refund, reduction or extension. The buyer bears this risk.</p>
+      <p><strong>Account suspension.</strong> If the Provider's account is permanently suspended during the campaign period and continuing the campaign thereby becomes impossible, the Provider will refund the purchase price to all affected buyers.</p>
+      <p><strong>Cessation of publishing for personal reasons.</strong> If the Provider ceases publishing for health or personal reasons, there is no entitlement to a refund.</p>
+
+      <h2>12. Liability</h2>
+      <p>The Provider is liable without limitation for intent and gross negligence, and for damage arising from injury to life, body or health.</p>
+      <p>The Provider is not liable to entrepreneurs for slight negligence. In relation to consumers, liability for slight negligence in cases of personal injury and in cases mandatorily prescribed by law remains unaffected.</p>
+      <p>The buyer is liable for content the buyer supplies.</p>
+
+      <h2>13. Right of withdrawal for consumers</h2>
+      <p>Consumers have a statutory right of withdrawal.</p>
+
+      <h3>Withdrawal instructions</h3>
+      <p><strong>Right of withdrawal.</strong> You have the right to withdraw from this contract within fourteen days without giving any reason. The withdrawal period is fourteen days from the day the contract was concluded.</p>
+      <p><strong>Exercising the right.</strong> To exercise your right of withdrawal, you must inform us (Dustin Williamson, Linzer Gasse 10, 5020 Salzburg, Austria, dustin@wewillplus.com) by means of a clear statement, for example by email, of your decision to withdraw from this contract. You may use the model withdrawal form below, but it is not obligatory. To meet the deadline it is sufficient for you to send your communication before the period expires.</p>
+      <p><strong>Consequences of withdrawal.</strong> If you withdraw from this contract, we will reimburse all payments received from you without undue delay and no later than fourteen days from the day on which we receive notice of your withdrawal. We will use the same means of payment you used for the original transaction unless expressly agreed otherwise with you. You will not be charged any fees as a result of this reimbursement.</p>
+      <p><strong>Performance beginning during the withdrawal period.</strong> If you requested that the service begin during the withdrawal period, you must pay us an amount proportionate to what has been provided until you communicated your withdrawal, in comparison with the full coverage of the contract. This proportion is calculated per day, based on the number of campaign days on which your artwork was displayed.</p>
+      <p>By completing the payment process, the buyer expressly requests that the campaign begin before the withdrawal period has expired, insofar as the campaign period is already running at that time, and acknowledges the proportionate payment obligation set out above.</p>
+
+      <h3>Model withdrawal form</h3>
+      <div class="form">
+        <p>To Dustin Williamson, Linzer Gasse 10, 5020 Salzburg, Austria, dustin@wewillplus.com:</p>
+        <p>I/we hereby withdraw from the contract concluded by me/us for the purchase of advertising space on Sat Space.</p>
+        <p>Ordered on: ______________<br>Name of consumer(s): ______________<br>Address of consumer(s): ______________<br>Order or invoice number: ______________<br>Date: ______________<br>Signature (only if this form is notified on paper): ______________</p>
+      </div>
+
+      <h2>14. Data protection</h2>
+      <p>Information on the processing of personal data can be found in the <a href="datenschutz.html">privacy policy</a>.</p>
+
+      <h2>15. Final provisions</h2>
+      <p>Austrian law applies, excluding its conflict-of-law rules. In relation to consumers, this choice of law applies only insofar as it does not deprive them of the protection afforded by mandatory provisions of the law of the country in which they have their habitual residence.</p>
+      <p>For disputes with entrepreneurs, the courts with subject-matter jurisdiction in Salzburg, Austria, have exclusive jurisdiction. For consumers, the statutory places of jurisdiction apply.</p>
+      <p>The European Commission provides a platform for online dispute resolution: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>. The Provider is neither obliged nor willing to participate in dispute resolution proceedings before a consumer arbitration body.</p>
+      <p>Should any provision of these Terms be or become invalid, the validity of the remaining provisions is unaffected.</p>
+      <p>The German version of these Terms is authoritative. The English version is a translation provided to aid understanding.</p>
+
+      <div class="pending">This version has not yet been reviewed by a lawyer. The final terms will be settled with a legal advisor before any real payments are accepted.</div>
+    </div>
+
   </div>
 </div>
+
+<script>
+(function(){
+  var buttons = { de: document.getElementById('btn-de'), en: document.getElementById('btn-en') };
+
+  function apply(lang){
+    if(lang !== 'de' && lang !== 'en') lang = 'en';
+    document.documentElement.classList.toggle('lang-de', lang === 'de');
+    buttons.de.setAttribute('aria-pressed', String(lang === 'de'));
+    buttons.en.setAttribute('aria-pressed', String(lang === 'en'));
+    document.documentElement.lang = lang;
+    try { localStorage.setItem('satspace-agb-lang', lang); } catch(e){}
+  }
+
+  // Remembered choice wins. Otherwise follow the browser, defaulting to English.
+  var saved = null;
+  try { saved = localStorage.getItem('satspace-agb-lang'); } catch(e){}
+  var browser = (navigator.language || 'en').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
+  apply(saved || browser);
+
+  buttons.de.addEventListener('click', function(){ apply('de'); });
+  buttons.en.addEventListener('click', function(){ apply('en'); });
+})();
+</script>
 </body>
 </html>
