@@ -14,45 +14,125 @@
   .back{display:inline-block;margin-bottom:22px;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8A7F6B;text-decoration:none;}
   .back:hover{color:#4A4136;text-decoration:underline;}
   a{color:#2C5AA0;}
+  .langbar{display:flex;gap:0;margin-bottom:20px;border:2px solid #17130E;width:max-content;}
+  .langbar button{appearance:none;border:0;background:#fff;color:#8A7F6B;font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 16px;cursor:pointer;}
+  .langbar button+button{border-left:2px solid #17130E;}
+  .langbar button[aria-pressed="true"]{background:#17130E;color:#ECECEA;}
+  /* English shows by default, so the policy is still readable if the script
+     never runs. The class below is what swaps the page to German. */
+  [data-lang="en"]{display:block;}
+  [data-lang="de"]{display:none;}
+  .lang-de [data-lang="en"]{display:none;}
+  .lang-de [data-lang="de"]{display:block;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="index.html">&larr; Back to Sat Space</a>
   <div class="box">
-    <h1>Datenschutzerkl&auml;rung</h1>
-    <p>The protection of your personal data is important to us. We process your data only on the basis of applicable law (GDPR, Austrian TKG 2003). This page explains the key aspects of how data is handled on this website.</p>
 
-    <h2>Contact with us</h2>
-    <p>This website does not have a contact form. If you contact us by email, the information you provide is stored to process your inquiry and any follow-up questions. We do not share this data without your consent.</p>
+    <div class="langbar">
+      <button type="button" id="btn-de" aria-pressed="false">Deutsch</button>
+      <button type="button" id="btn-en" aria-pressed="false">English</button>
+    </div>
 
-    <h2>Hosting</h2>
-    <p>This website is hosted by Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA, via Cloudflare Pages. Cloudflare may process personal data (such as IP addresses) as part of delivering the site and its backend functions, and provides Standard Contractual Clauses for data transferred outside the EU/EEA. More information: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">cloudflare.com/privacypolicy</a></p>
+    <!-- ================================ DEUTSCH ================================ -->
+    <div data-lang="de">
+      <h1>Datenschutzerklärung</h1>
+      <p>Der Schutz Ihrer personenbezogenen Daten ist uns wichtig. Wir verarbeiten Ihre Daten ausschließlich auf Grundlage der gesetzlichen Bestimmungen (DSGVO, österreichisches TKG 2003). Auf dieser Seite informieren wir Sie über die wesentlichen Aspekte der Datenverarbeitung auf dieser Website.</p>
 
-    <h2>Payments</h2>
-    <p>When you purchase a Sat Space slot, payment is processed by Stripe (Stripe Payments Europe, Limited, 1 Grand Canal Street Lower, Dublin 2, Ireland, for EU customers). Stripe collects your payment details, such as card information and billing email, directly. We do not see or store your full card details ourselves. More information: <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a></p>
+      <h2>Kontakt mit uns</h2>
+      <p>Diese Website verfügt über kein Kontaktformular. Wenn Sie uns per E-Mail kontaktieren, werden Ihre Angaben zur Bearbeitung Ihrer Anfrage und für den Fall von Anschlussfragen gespeichert. Diese Daten geben wir ohne Ihre Einwilligung nicht weiter.</p>
 
-    <h2>Database and file storage</h2>
-    <p>Purchase records and uploaded artwork are stored using Supabase, hosted in an EU data center (Frankfurt, Germany). Supabase Inc. is a US-based company, so data may in principle remain subject to US legal requests even while stored on EU servers. More information: <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></p>
+      <h2>Hosting</h2>
+      <p>Diese Website wird von Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA, über Cloudflare Pages gehostet. Cloudflare kann im Rahmen der Auslieferung der Website und ihrer Backend-Funktionen personenbezogene Daten (etwa IP-Adressen) verarbeiten und stellt für Datenübermittlungen außerhalb der EU beziehungsweise des EWR Standardvertragsklauseln bereit. Weitere Informationen: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">cloudflare.com/privacypolicy</a></p>
 
-    <h2>Security and abuse prevention</h2>
-    <p>To keep the slot reservation and checkout functions available and to prevent automated abuse, we limit how often they can be called from the same internet connection. For this purpose your IP address is converted into a one-way fingerprint using a secret value, and only that fingerprint is stored, never the IP address itself. The fingerprint cannot be converted back into an IP address and is not used to identify you or to track your use of the site. These records are stored with Supabase (EU data center, Frankfurt) and are deleted automatically after one hour. The legal basis is our legitimate interest in the security and availability of this website (Art. 6(1)(f) GDPR).</p>
+      <h2>Zahlungen</h2>
+      <p>Wenn Sie einen Sat-Space-Slot kaufen, wird die Zahlung über Stripe abgewickelt (für Kundinnen und Kunden in der EU: Stripe Payments Europe, Limited, 1 Grand Canal Street Lower, Dublin 2, Irland). Stripe erhebt Ihre Zahlungsdaten, etwa Kartendaten und Rechnungs-E-Mail-Adresse, unmittelbar selbst. Ihre vollständigen Kartendaten sehen oder speichern wir nicht. Weitere Informationen: <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a></p>
 
-    <h2>Purchase notifications</h2>
-    <p>When a purchase is completed, a notification with basic purchase details, which may include your email address, is sent to a private Discord channel so it can be reviewed promptly. This is provided by Discord Inc., 444 De Haro Street, San Francisco, CA 94107, USA. More information: <a href="https://discord.com/privacy" target="_blank" rel="noopener">discord.com/privacy</a></p>
+      <h2>Datenbank und Dateispeicher</h2>
+      <p>Kaufdatensätze und hochgeladene Werbemittel werden mit Supabase gespeichert, gehostet in einem EU-Rechenzentrum (Frankfurt, Deutschland). Supabase Inc. ist ein US-amerikanisches Unternehmen, weshalb Daten grundsätzlich auch dann US-behördlichen Auskunftsersuchen unterliegen können, wenn sie auf EU-Servern gespeichert sind. Weitere Informationen: <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></p>
 
-    <h2>Cookies</h2>
-    <p>This website does not currently use cookies, analytics, or tracking scripts.</p>
+      <h2>Sicherheit und Missbrauchsprävention</h2>
+      <p>Um die Funktionen zur Slot-Reservierung und zum Bezahlvorgang verfügbar zu halten und automatisierten Missbrauch zu verhindern, begrenzen wir, wie oft diese von derselben Internetverbindung aus aufgerufen werden können. Zu diesem Zweck wird Ihre IP-Adresse mithilfe eines geheimen Werts in einen Einweg-Fingerabdruck umgewandelt. Gespeichert wird ausschließlich dieser Fingerabdruck, niemals die IP-Adresse selbst. Der Fingerabdruck kann nicht in eine IP-Adresse zurückgerechnet werden und wird weder zu Ihrer Identifizierung noch zur Nachverfolgung Ihrer Nutzung der Website verwendet. Diese Datensätze werden bei Supabase (EU-Rechenzentrum, Frankfurt) gespeichert und nach einer Stunde automatisch gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse an der Sicherheit und Verfügbarkeit dieser Website (Art. 6 Abs. 1 lit. f DSGVO).</p>
 
-    <h2>Data retention</h2>
-    <p>Purchase and payment records are kept for as long as required under Austrian tax and accounting law. Exact retention periods are being confirmed with a tax advisor.</p>
+      <h2>Kaufbenachrichtigungen</h2>
+      <p>Wenn ein Kauf abgeschlossen wird, wird eine Benachrichtigung mit grundlegenden Kaufdaten, die auch Ihre E-Mail-Adresse enthalten kann, an einen privaten Discord-Kanal gesendet, damit der Kauf zeitnah geprüft werden kann. Anbieter ist Discord Inc., 444 De Haro Street, San Francisco, CA 94107, USA. Weitere Informationen: <a href="https://discord.com/privacy" target="_blank" rel="noopener">discord.com/privacy</a></p>
 
-    <h2>Your rights</h2>
-    <p>You generally have the right to access, rectification, erasure, restriction, data portability, and objection regarding your personal data. If you believe processing of your data violates data protection law, you can file a complaint with the supervisory authority. In Austria, this is the Datenschutzbeh&ouml;rde (<a href="https://www.dsb.gv.at" target="_blank" rel="noopener">dsb.gv.at</a>).</p>
+      <h2>Cookies</h2>
+      <p>Diese Website verwendet derzeit keine Cookies, keine Analyse- und keine Tracking-Skripte.</p>
 
-    <h2>Contact for data protection inquiries</h2>
-    <p>Dustin Williamson<br>Linzer Gasse 10<br>5020 Salzburg, Austria<br>Email: <a href="mailto:dustin@wewillplus.com">dustin@wewillplus.com</a></p>
+      <h2>Speicherdauer</h2>
+      <p>Kauf- und Zahlungsunterlagen werden so lange aufbewahrt, wie dies nach österreichischem Steuer- und Rechnungslegungsrecht erforderlich ist. Die genauen Aufbewahrungsfristen werden derzeit mit einem Steuerberater abgeklärt.</p>
+
+      <h2>Ihre Rechte</h2>
+      <p>Ihnen stehen grundsätzlich die Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch hinsichtlich Ihrer personenbezogenen Daten zu. Wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten gegen das Datenschutzrecht verstößt, können Sie sich bei der Aufsichtsbehörde beschweren. In Österreich ist dies die Datenschutzbehörde (<a href="https://www.dsb.gv.at" target="_blank" rel="noopener">dsb.gv.at</a>).</p>
+
+      <h2>Kontakt für Datenschutzanfragen</h2>
+      <p>Dustin Williamson<br>Linzer Gasse 10<br>5020 Salzburg, Österreich<br>E-Mail: <a href="mailto:dustin@wewillplus.com">dustin@wewillplus.com</a></p>
+    </div>
+
+    <!-- ================================ ENGLISH ================================ -->
+    <div data-lang="en">
+      <h1>Privacy Policy</h1>
+      <p>The protection of your personal data is important to us. We process your data only on the basis of applicable law (GDPR, Austrian TKG 2003). This page explains the key aspects of how data is handled on this website.</p>
+
+      <h2>Contact with us</h2>
+      <p>This website does not have a contact form. If you contact us by email, the information you provide is stored to process your inquiry and any follow-up questions. We do not share this data without your consent.</p>
+
+      <h2>Hosting</h2>
+      <p>This website is hosted by Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA, via Cloudflare Pages. Cloudflare may process personal data (such as IP addresses) as part of delivering the site and its backend functions, and provides Standard Contractual Clauses for data transferred outside the EU/EEA. More information: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">cloudflare.com/privacypolicy</a></p>
+
+      <h2>Payments</h2>
+      <p>When you purchase a Sat Space slot, payment is processed by Stripe (Stripe Payments Europe, Limited, 1 Grand Canal Street Lower, Dublin 2, Ireland, for EU customers). Stripe collects your payment details, such as card information and billing email, directly. We do not see or store your full card details ourselves. More information: <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a></p>
+
+      <h2>Database and file storage</h2>
+      <p>Purchase records and uploaded artwork are stored using Supabase, hosted in an EU data center (Frankfurt, Germany). Supabase Inc. is a US-based company, so data may in principle remain subject to US legal requests even while stored on EU servers. More information: <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></p>
+
+      <h2>Security and abuse prevention</h2>
+      <p>To keep the slot reservation and checkout functions available and to prevent automated abuse, we limit how often they can be called from the same internet connection. For this purpose your IP address is converted into a one-way fingerprint using a secret value, and only that fingerprint is stored, never the IP address itself. The fingerprint cannot be converted back into an IP address and is not used to identify you or to track your use of the site. These records are stored with Supabase (EU data center, Frankfurt) and are deleted automatically after one hour. The legal basis is our legitimate interest in the security and availability of this website (Art. 6(1)(f) GDPR).</p>
+
+      <h2>Purchase notifications</h2>
+      <p>When a purchase is completed, a notification with basic purchase details, which may include your email address, is sent to a private Discord channel so it can be reviewed promptly. This is provided by Discord Inc., 444 De Haro Street, San Francisco, CA 94107, USA. More information: <a href="https://discord.com/privacy" target="_blank" rel="noopener">discord.com/privacy</a></p>
+
+      <h2>Cookies</h2>
+      <p>This website does not currently use cookies, analytics, or tracking scripts.</p>
+
+      <h2>Data retention</h2>
+      <p>Purchase and payment records are kept for as long as required under Austrian tax and accounting law. Exact retention periods are being confirmed with a tax advisor.</p>
+
+      <h2>Your rights</h2>
+      <p>You generally have the right to access, rectification, erasure, restriction, data portability, and objection regarding your personal data. If you believe processing of your data violates data protection law, you can file a complaint with the supervisory authority. In Austria, this is the Datenschutzbeh&ouml;rde (<a href="https://www.dsb.gv.at" target="_blank" rel="noopener">dsb.gv.at</a>).</p>
+
+      <h2>Contact for data protection inquiries</h2>
+      <p>Dustin Williamson<br>Linzer Gasse 10<br>5020 Salzburg, Austria<br>Email: <a href="mailto:dustin@wewillplus.com">dustin@wewillplus.com</a></p>
+    </div>
+
   </div>
 </div>
+
+<script>
+(function(){
+  var buttons = { de: document.getElementById('btn-de'), en: document.getElementById('btn-en') };
+
+  function apply(lang){
+    if(lang !== 'de' && lang !== 'en') lang = 'en';
+    document.documentElement.classList.toggle('lang-de', lang === 'de');
+    buttons.de.setAttribute('aria-pressed', String(lang === 'de'));
+    buttons.en.setAttribute('aria-pressed', String(lang === 'en'));
+    document.documentElement.lang = lang;
+    try { localStorage.setItem('satspace-lang', lang); } catch(e){}
+  }
+
+  // Remembered choice wins. Otherwise follow the browser, defaulting to English.
+  var saved = null;
+  try { saved = localStorage.getItem('satspace-lang'); } catch(e){}
+  var browser = (navigator.language || 'en').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
+  apply(saved || browser);
+
+  buttons.de.addEventListener('click', function(){ apply('de'); });
+  buttons.en.addEventListener('click', function(){ apply('en'); });
+})();
+</script>
 </body>
 </html>

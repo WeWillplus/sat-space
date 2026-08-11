@@ -257,12 +257,12 @@
     buttons.de.setAttribute('aria-pressed', String(lang === 'de'));
     buttons.en.setAttribute('aria-pressed', String(lang === 'en'));
     document.documentElement.lang = lang;
-    try { localStorage.setItem('satspace-agb-lang', lang); } catch(e){}
+    try { localStorage.setItem('satspace-lang', lang); } catch(e){}
   }
 
   // Remembered choice wins. Otherwise follow the browser, defaulting to English.
   var saved = null;
-  try { saved = localStorage.getItem('satspace-agb-lang'); } catch(e){}
+  try { saved = localStorage.getItem('satspace-lang'); } catch(e){}
   var browser = (navigator.language || 'en').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
   apply(saved || browser);
 
