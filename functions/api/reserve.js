@@ -1,11 +1,9 @@
+import { json, isBlockedOrigin, isRateLimited, sweepExpired } from '../../lib/api-guards.js';
+
 const SATS_PER_SLOT = 140000;
 const MAX_ARTWORK_BYTES = 5 * 1024 * 1024;
 const MAX_CELLS = 144;
 const EXT_BY_MIME = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
-
-function json(obj, status) {
-  return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'content-type': 'application/json' } });
-}
 
 function parseDataUrl(dataUrl) {
   const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl || '');
@@ -52,9 +50,19 @@ async function abort(env, purchaseId, errorMsg, status) {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  if (isBlockedOrigin(request)) return json({ error: 'Request did not come from Sat Space' }, 403);
+
+  if (await isRateLimited(env, request, 'reserve')) {
+    return json({ error: 'Too many reservation attempts, wait a few minutes and try again' }, 429);
+  }
+
   let body;
   try { body = await request.json(); }
   catch (e) { return json({ error: 'Invalid request body' }, 400); }
+
+  // Hand back any slots held by reservations nobody paid for, before we check
+  // what is still free. Otherwise an abandoned checkout blocks this buyer.
+  await sweepExpired(env);
 
   const rawCells = Array.isArray(body.cells) ? body.cells : null;
   if (!rawCells || rawCells.length === 0) return json({ error: 'No slots selected' }, 400);

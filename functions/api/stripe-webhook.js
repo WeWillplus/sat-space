@@ -70,6 +70,27 @@ async function handle(context) {
 
   const email = session.customer_details && session.customer_details.email;
 
+  // Check the current state before writing anything. Two things make this
+  // necessary: Stripe retries a webhook until it gets a 200, so this can be
+  // called more than once for the same payment, and a payment can in theory
+  // land against a reservation that already expired, which needs a human.
+  const lookupRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases?id=eq.' + purchaseId + '&select=id,status', {
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY }
+  });
+  if (!lookupRes.ok) {
+    const detail = await lookupRes.text();
+    return json({ error: 'Failed to look up purchase', detail: detail }, 502);
+  }
+  const existing = (await lookupRes.json())[0];
+  if (!existing) return json({ error: 'Purchase not found' }, 404);
+
+  // Already dealt with. Return 200 so Stripe stops retrying.
+  if (existing.status !== 'pending' && existing.status !== 'expired') {
+    return json({ received: true, alreadyProcessed: true, status: existing.status });
+  }
+
+  const wasExpired = existing.status === 'expired';
+
   const purchasePatch = {
     status: 'paid',
     paid_at: new Date().toISOString(),
@@ -77,7 +98,7 @@ async function handle(context) {
   };
   if (email) purchasePatch.email = email;
 
-  const purRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases?id=eq.' + purchaseId, {
+  const purRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases?id=eq.' + purchaseId + '&status=in.(pending,expired)', {
     method: 'PATCH',
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -107,9 +128,35 @@ async function handle(context) {
     return json({ error: 'Failed to mark slots sold', detail: detail }, 502);
   }
 
+  // The slot update above matched nothing in this case, because expiring the
+  // reservation already handed those slots back. The money is real and
+  // recorded, but there is nothing to show for it, so this needs Dustin.
+  if (wasExpired) {
+    await notifyExpiredPayment(env, purchaseId, email);
+    return json({ received: true, expiredReservation: true });
+  }
+
   await notifyDiscord(env, purchaseId, email);
 
   return json({ received: true });
+}
+
+async function notifyExpiredPayment(env, purchaseId, email) {
+  if (!env.DISCORD_WEBHOOK_URL) return;
+  const lines = [
+    '@here PAYMENT AGAINST AN EXPIRED RESERVATION, needs manual action.',
+    'Purchase #' + purchaseId + ' was paid after its slots had already been released.',
+    'The payment is recorded, but no slots are held for this buyer.',
+    email ? 'Buyer: ' + email : 'Buyer email unknown.',
+    'Either refund them in Stripe, or reassign slots by hand if any are still free.'
+  ];
+  try {
+    await fetch(env.DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: lines.join('\n') })
+    });
+  } catch (e) { /* best effort, must never fail the payment confirmation */ }
 }
 
 async function notifyDiscord(env, purchaseId, email) {

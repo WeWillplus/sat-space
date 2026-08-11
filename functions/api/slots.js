@@ -1,6 +1,10 @@
-function json(obj, status) {
-  return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'content-type': 'application/json' } });
-}
+import { json, sweepExpired } from '../../lib/api-guards.js';
+
+// The sweep is cheap but this endpoint runs on every single page load, so it
+// is throttled rather than run every time. A missed sweep costs nothing, the
+// next request picks it up.
+const SWEEP_INTERVAL_MS = 60000;
+let lastSweep = 0;
 
 async function signUrl(env, path) {
   const res = await fetch(env.SUPABASE_URL + '/storage/v1/object/sign/artwork/' + path, {
@@ -19,6 +23,14 @@ async function signUrl(env, path) {
 
 export async function onRequestGet(context) {
   const { env } = context;
+
+  // Release abandoned reservations so the grid we are about to return is
+  // honest about what is actually for sale. waitUntil lets this finish after
+  // the response has already gone out, so nobody waits for it.
+  if (Date.now() - lastSweep > SWEEP_INTERVAL_MS) {
+    lastSweep = Date.now();
+    context.waitUntil(sweepExpired(env));
+  }
 
   const res = await fetch(
     env.SUPABASE_URL + '/rest/v1/slots?select=col,row,is_sold,purchase_id,purchases(status,image_path,art_zoom,art_offset_x,art_offset_y)',

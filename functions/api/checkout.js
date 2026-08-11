@@ -1,6 +1,4 @@
-function json(obj, status) {
-  return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'content-type': 'application/json' } });
-}
+import { json, isBlockedOrigin, isRateLimited, STRIPE_SESSION_SECONDS } from '../../lib/api-guards.js';
 
 function isValidId(v) {
   const n = Number(v);
@@ -9,6 +7,12 @@ function isValidId(v) {
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  if (isBlockedOrigin(request)) return json({ error: 'Request did not come from Sat Space' }, 403);
+
+  if (await isRateLimited(env, request, 'checkout')) {
+    return json({ error: 'Too many checkout attempts, wait a few minutes and try again' }, 429);
+  }
 
   let body;
   try { body = await request.json(); }
@@ -58,6 +62,11 @@ export async function onRequestPost(context) {
   params.append('success_url', origin + '/success.html?purchase_id=' + purchaseId);
   params.append('cancel_url', origin + '/index.html?canceled=1');
   params.append('metadata[purchase_id]', String(purchaseId));
+  // Kill the payment link at the same time the reservation runs out, so a
+  // stale link can never be paid for slots that have gone back on sale.
+  // Stripe rejects anything under 30 minutes, which is why the reservation
+  // window is longer once someone has reached this point.
+  params.append('expires_at', String(Math.floor(Date.now() / 1000) + STRIPE_SESSION_SECONDS));
   params.append('invoice_creation[enabled]', 'true');
   params.append('invoice_creation[invoice_data][footer]', 'No VAT charged. Small business exemption under Austrian VAT law (Kleinunternehmerregelung, section 6 para 1 no 27 UStG).');
 
