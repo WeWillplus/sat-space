@@ -76,6 +76,19 @@ export async function onRequestPost(context) {
   // Stripe rejects anything under 30 minutes, which is why the reservation
   // window is longer once someone has reached this point.
   params.append('expires_at', String(Math.floor(Date.now() / 1000) + STRIPE_SESSION_SECONDS));
+  // Austrian invoices up to 400 euro can leave out the buyer's name and
+  // address (Kleinbetragsrechnung). Above that, both are required. Slots are
+  // priced in sats, so the euro total moves with Bitcoin and the slot count
+  // where an order crosses 400 euro moves with it: around six slots at 55k,
+  // about three at 100k. Since that cannot be predicted at checkout time, the
+  // address is collected on every purchase rather than only on large ones.
+  params.append('billing_address_collection', 'required');
+
+  // Optional for the buyer. Consumers skip it; a company can enter its UID and
+  // have it appear on the invoice, which businesses expect even where no VAT
+  // is charged.
+  params.append('tax_id_collection[enabled]', 'true');
+
   params.append('invoice_creation[enabled]', 'true');
   params.append('invoice_creation[invoice_data][footer]', 'No VAT charged. Small business exemption under Austrian VAT law (Kleinunternehmerregelung, section 6 para 1 no 27 UStG).');
 
