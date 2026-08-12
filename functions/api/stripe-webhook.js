@@ -15,14 +15,21 @@ function hex(buffer) {
 
 async function verifyStripeSignature(payload, sigHeader, secret) {
   if (!sigHeader) return false;
-  const parts = {};
+  // Stripe sends one v1 signature per active signing secret, so during a
+  // secret rotation the header carries several. Keeping only the last one
+  // would make verification fail at exactly the moment secrets are being
+  // rotated, so collect them all and accept a match against any.
+  let timestamp = null;
+  const signatures = [];
   sigHeader.split(',').forEach(function (item) {
-    const kv = item.split('=');
-    parts[kv[0]] = kv[1];
+    const idx = item.indexOf('=');
+    if (idx < 0) return;
+    const key = item.slice(0, idx).trim();
+    const value = item.slice(idx + 1).trim();
+    if (key === 't') timestamp = value;
+    else if (key === 'v1') signatures.push(value);
   });
-  const timestamp = parts.t;
-  const v1 = parts.v1;
-  if (!timestamp || !v1) return false;
+  if (!timestamp || signatures.length === 0) return false;
 
   const age = Math.abs((Date.now() / 1000) - Number(timestamp));
   if (age > TOLERANCE_SECONDS) return false;
@@ -33,10 +40,12 @@ async function verifyStripeSignature(payload, sigHeader, secret) {
   const sigBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(timestamp + '.' + payload));
   const expected = hex(sigBuffer);
 
-  if (expected.length !== v1.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ v1.charCodeAt(i);
-  return diff === 0;
+  return signatures.some(function (candidate) {
+    if (expected.length !== candidate.length) return false;
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ candidate.charCodeAt(i);
+    return diff === 0;
+  });
 }
 
 export async function onRequestPost(context) {

@@ -6,6 +6,30 @@ import { json, sweepExpired } from '../../lib/api-guards.js';
 const SWEEP_INTERVAL_MS = 60000;
 let lastSweep = 0;
 
+// Building this response costs one query plus one Supabase call per approved
+// artwork, so a single visitor was costing around twenty requests and a reel
+// sending a few thousand people would have buried the database exactly when
+// people were trying to buy.
+//
+// Holding the finished response for half a minute collapses that to a couple
+// of requests per minute no matter how much traffic arrives.
+//
+// Serving a grid up to 30 seconds stale cannot cause a double sale: /api/reserve
+// re-checks availability against the database in a single atomic claim, so the
+// database, not this response, decides who gets a slot.
+const CACHE_MS = 30000;
+let cachedBody = null;
+let cachedAt = 0;
+
+function cachedResponse(body) {
+  return new Response(body, {
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'public, max-age=30'
+    }
+  });
+}
+
 async function signUrl(env, path) {
   const res = await fetch(env.SUPABASE_URL + '/storage/v1/object/sign/artwork/' + path, {
     method: 'POST',
@@ -31,6 +55,8 @@ export async function onRequestGet(context) {
     lastSweep = Date.now();
     context.waitUntil(sweepExpired(env));
   }
+
+  if (cachedBody && Date.now() - cachedAt < CACHE_MS) return cachedResponse(cachedBody);
 
   const res = await fetch(
     env.SUPABASE_URL + '/rest/v1/slots?select=col,row,is_sold,purchase_id,purchases(status,image_path,art_zoom,art_offset_x,art_offset_y)',
@@ -73,5 +99,7 @@ export async function onRequestGet(context) {
     return entry;
   });
 
-  return json(out);
+  cachedBody = JSON.stringify(out);
+  cachedAt = Date.now();
+  return cachedResponse(cachedBody);
 }

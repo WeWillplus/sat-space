@@ -537,7 +537,7 @@
       .then(function(res){
         if(res.ok){
           toast('Reservation created', 'Purchase #'+res.data.purchaseId+' · '+nfSats.format(res.data.satsAmount)+' sats. Taking you to checkout.');
-          return fetch('/api/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({purchaseId:res.data.purchaseId}) })
+          return fetch('/api/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({purchaseId:res.data.purchaseId, token:res.data.token}) })
             .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
             .then(function(cres){
               if(cres.ok && cres.data.checkoutUrl){ window.location.href = cres.data.checkoutUrl; }

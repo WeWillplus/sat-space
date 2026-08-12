@@ -2,6 +2,26 @@ function json(obj, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'content-type': 'application/json' } });
 }
 
+// Every call here used to hit CoinGecko live, with no limit and no login, so
+// anyone could burn through the upstream quota until both sources refused and
+// checkout started failing with "Live rate unavailable". That is a way to stop
+// sales using nothing but GET requests.
+//
+// Bitcoin does not move enough in a minute to matter for a slot price, so the
+// rate is held for 60 seconds. The attack disappears with it.
+const CACHE_MS = 60000;
+let cached = null;
+let cachedAt = 0;
+
+function rateResponse(payload, maxAge) {
+  return new Response(JSON.stringify(payload), {
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'public, max-age=' + maxAge
+    }
+  });
+}
+
 async function fetchCoinGecko() {
   const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', {
     headers: {
@@ -28,13 +48,17 @@ async function fetchKraken() {
 }
 
 export async function onRequestGet(context) {
+  if (cached && Date.now() - cachedAt < CACHE_MS) return rateResponse(cached, 60);
+
   const sources = [['coingecko', fetchCoinGecko], ['kraken', fetchKraken]];
   const errors = [];
 
   for (const [name, fn] of sources) {
     try {
       const rate = await fn();
-      return json({ rate: rate, source: name, fetchedAt: new Date().toISOString() });
+      cached = { rate: rate, source: name, fetchedAt: new Date().toISOString() };
+      cachedAt = Date.now();
+      return rateResponse(cached, 60);
     } catch (e) {
       errors.push(e.message);
     }

@@ -1,4 +1,4 @@
-import { json, isBlockedOrigin, isRateLimited, STRIPE_SESSION_SECONDS } from '../../lib/api-guards.js';
+import { json, isBlockedOrigin, isRateLimited, STRIPE_SESSION_SECONDS, purchaseToken, tokensMatch } from '../../lib/api-guards.js';
 
 function isValidId(v) {
   const n = Number(v);
@@ -20,6 +20,15 @@ export async function onRequestPost(context) {
 
   if (!isValidId(body.purchaseId)) return json({ error: 'Missing or invalid purchaseId' }, 400);
   const purchaseId = Number(body.purchaseId);
+
+  // Only the browser that made this reservation was given the token, so this
+  // is what proves the caller owns it. Purchase ids are sequential and easy to
+  // guess; without this, anyone could walk them and start checkouts on other
+  // people's pending reservations, re-locking their rate and leaving orphaned
+  // Stripe sessions behind.
+  if (!tokensMatch(body.token, await purchaseToken(env, purchaseId))) {
+    return json({ error: 'This reservation does not belong to you' }, 403);
+  }
 
   const purRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases?id=eq.' + purchaseId + '&select=id,slot_count,sats_amount,status', {
     headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY }

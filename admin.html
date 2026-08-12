@@ -78,11 +78,25 @@
 
       var info = document.createElement('div');
       info.className = 'info';
-      info.innerHTML =
-        '<div class="id">Purchase #' + item.purchaseId + '</div>' +
-        '<div class="amount">' + item.slotCount + (item.slotCount === 1 ? ' slot' : ' slots') + ' &middot; ' + item.satsAmount + ' sats &middot; &euro;' + (item.eurAmount != null ? item.eurAmount : '?') + '</div>' +
-        '<div class="meta">Cells: ' + fmtCells(item.cells) + '</div>' +
-        '<div class="meta">Buyer: ' + (item.email || 'no email on file') + '</div>';
+
+      // Built with textContent rather than innerHTML. The buyer's email is the
+      // one value here that comes from outside, and this is the page with the
+      // Approve button on it, so it is the worst possible place to paste
+      // untrusted text straight into HTML.
+      function line(cls, text){
+        var d = document.createElement('div');
+        d.className = cls;
+        d.textContent = text;
+        return d;
+      }
+
+      info.appendChild(line('id', 'Purchase #' + item.purchaseId));
+      info.appendChild(line('amount',
+        item.slotCount + (item.slotCount === 1 ? ' slot' : ' slots') +
+        ' · ' + item.satsAmount + ' sats · €' +
+        (item.eurAmount != null ? item.eurAmount : '?')));
+      info.appendChild(line('meta', 'Cells: ' + fmtCells(item.cells)));
+      info.appendChild(line('meta', 'Buyer: ' + (item.email || 'no email on file')));
 
       var btns = document.createElement('div');
       btns.className = 'btns';

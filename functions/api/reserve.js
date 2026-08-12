@@ -1,4 +1,4 @@
-import { json, isBlockedOrigin, isRateLimited, sweepExpired } from '../../lib/api-guards.js';
+import { json, isBlockedOrigin, isRateLimited, sweepExpired, purchaseToken } from '../../lib/api-guards.js';
 
 const SATS_PER_SLOT = 140000;
 const MAX_ARTWORK_BYTES = 5 * 1024 * 1024;
@@ -10,11 +10,37 @@ function parseDataUrl(dataUrl) {
   return m ? { mime: m[1], base64: m[2] } : null;
 }
 
+// Returns null instead of throwing. atob() rejects malformed base64 with an
+// exception, and by the time this runs the slots are already claimed, so an
+// uncaught throw would strand them behind a generic 500 with no cleanup.
 function base64ToBytes(base64) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
+  try {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Checks the file really is what it says it is, by reading the first few bytes
+// rather than trusting the type the browser announced. Anyone can claim
+// image/png; only a real PNG starts with the PNG signature.
+function looksLike(mime, b) {
+  if (mime === 'image/png') {
+    return b.length > 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47 &&
+           b[4] === 0x0D && b[5] === 0x0A && b[6] === 0x1A && b[7] === 0x0A;
+  }
+  if (mime === 'image/jpeg') {
+    return b.length > 3 && b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
+  }
+  if (mime === 'image/webp') {
+    return b.length > 12 &&
+           b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+           b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50;
+  }
+  return false;
 }
 
 async function releaseSlots(env, purchaseId) {
@@ -147,8 +173,19 @@ export async function onRequestPost(context) {
     const ext = EXT_BY_MIME[parsed.mime];
     if (!ext) return abort(env, purchase.id, 'Unsupported artwork type, use PNG, JPEG, or WEBP', 400);
 
+    // Check the size before decoding, not after. Base64 is about a third
+    // larger than the bytes it encodes, so this rejects an oversized upload
+    // without first allocating it in memory.
+    if (parsed.base64.length > Math.ceil(MAX_ARTWORK_BYTES * 4 / 3) + 1024) {
+      return abort(env, purchase.id, 'Artwork exceeds 5MB limit', 400);
+    }
+
     const bytes = base64ToBytes(parsed.base64);
+    if (!bytes) return abort(env, purchase.id, 'Artwork could not be read, try uploading it again', 400);
     if (bytes.length > MAX_ARTWORK_BYTES) return abort(env, purchase.id, 'Artwork exceeds 5MB limit', 400);
+    if (!looksLike(parsed.mime, bytes)) {
+      return abort(env, purchase.id, 'That file is not a valid PNG, JPEG, or WEBP image', 400);
+    }
 
     const imagePath = 'purchase-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
     const uploadRes = await fetch(env.SUPABASE_URL + '/storage/v1/object/artwork/' + imagePath, {
@@ -183,5 +220,10 @@ export async function onRequestPost(context) {
     }
   }
 
-  return json({ purchaseId: purchase.id, slotCount: slotCount, satsAmount: satsAmount });
+  // The token goes back to this buyer only, and /api/checkout requires it.
+  // It is what stops someone walking purchase ids and starting checkouts on
+  // reservations that are not theirs.
+  const token = await purchaseToken(env, purchase.id);
+
+  return json({ purchaseId: purchase.id, slotCount: slotCount, satsAmount: satsAmount, token: token });
 }
