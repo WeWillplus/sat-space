@@ -1,0 +1,10 @@
+# The export tool moved to /admin-export so that Cloudflare Access, which
+# protects /admin*, covers it. At /export it was reachable by anyone.
+#
+# These rules exist because Cloudflare's edge kept serving a cached copy of the
+# old page for hours after the file was removed from the deployment. Pointing
+# the old paths somewhere explicit is more reliable than waiting for a cache to
+# age out.
+
+/export.html  /admin-export  301
+/export       /admin-export  301
