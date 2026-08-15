@@ -89,6 +89,38 @@
     });
   }
 
+  // A slot is 60x60px in the finished reel, so a buyer uploading a 1500px logo
+  // is asking the browser to throw away 99% of it. Doing that in one step, with
+  // the canvas default of low-quality smoothing, is what makes edges look soft.
+  //
+  // Halving repeatedly instead keeps far more detail: each step only discards
+  // half the pixels, so fine lines survive that a single squeeze would lose.
+  // Stops once the image is within 2x of the size it will be drawn at, because
+  // the final drawImage handles that last step well on its own.
+  function downscaled(img, targetW, targetH){
+    var sw=img.naturalWidth, sh=img.naturalHeight;
+    if(sw <= targetW*2 && sh <= targetH*2) return img;
+
+    var cur=document.createElement('canvas');
+    cur.width=sw; cur.height=sh;
+    var cctx=cur.getContext('2d');
+    cctx.imageSmoothingEnabled=true;
+    cctx.imageSmoothingQuality='high';
+    cctx.drawImage(img,0,0);
+
+    while(cur.width > targetW*2 && cur.height > targetH*2){
+      var next=document.createElement('canvas');
+      next.width=Math.max(1,Math.floor(cur.width/2));
+      next.height=Math.max(1,Math.floor(cur.height/2));
+      var nctx=next.getContext('2d');
+      nctx.imageSmoothingEnabled=true;
+      nctx.imageSmoothingQuality='high';
+      nctx.drawImage(cur,0,0,next.width,next.height);
+      cur=next;
+    }
+    return cur;
+  }
+
   function drawPurchase(group){
     var cols=group.cells.map(function(c){return c.col;}), rows=group.cells.map(function(c){return c.row;});
     var c0=Math.min.apply(null,cols), c1=Math.max.apply(null,cols);
@@ -101,11 +133,14 @@
       var maxX=Math.max(0,(iw-rectW)/2), maxY=Math.max(0,(ih-rectH)/2);
       var drawX=rectX + (rectW-iw)/2 + ox*maxX;
       var drawY=rectY + (rectH-ih)/2 + oy*maxY;
+      var src=downscaled(img, Math.ceil(iw), Math.ceil(ih));
       ctx.save();
       ctx.beginPath();
       ctx.rect(rectX,rectY,rectW,rectH);
       ctx.clip();
-      ctx.drawImage(img, drawX, drawY, iw, ih);
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality='high';
+      ctx.drawImage(src, drawX, drawY, iw, ih);
       ctx.restore();
       log('Placed purchase #'+group.purchaseId+' ('+group.cells.length+' slot'+(group.cells.length===1?'':'s')+')');
     });
