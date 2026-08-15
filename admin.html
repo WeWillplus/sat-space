@@ -110,6 +110,21 @@
       rejectBtn.textContent = 'Reject';
 
       function act(action){
+        // Reject cannot be undone. It releases the slots immediately, so
+        // someone else can buy them within seconds, and it leaves a paying
+        // customer owed a manual refund. This page gets used on a phone with
+        // Approve and Reject side by side, so a mistap has to be impossible
+        // rather than merely unlikely.
+        if(action === 'reject'){
+          var who = item.email || 'buyer with no email on file';
+          var slots = item.slotCount + (item.slotCount === 1 ? ' slot' : ' slots');
+          var ok = window.confirm(
+            'Reject purchase #' + item.purchaseId + ' from ' + who + '?\n\n' +
+            slots + ' will be released for anyone else to buy, and you will need to refund ' +
+            'them yourself in Stripe.\n\nThis cannot be undone.'
+          );
+          if(!ok) return;
+        }
         approveBtn.disabled = true; rejectBtn.disabled = true;
         fetch('/api/admin/review', {
           method: 'POST',

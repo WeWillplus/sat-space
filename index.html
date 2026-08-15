@@ -245,7 +245,7 @@
             <div class="drop-t" id="dropT">Select slots first</div>
             <div class="drop-s" id="dropS">then drop a logo or click to browse</div>
           </div>
-          <input type="file" id="file" accept="image/*" class="hidden">
+          <input type="file" id="file" accept="image/png,image/jpeg,image/webp" class="hidden">
 
           <div id="adjust" class="hidden" style="margin-top:14px;">
             <div class="ctl-row">
@@ -447,6 +447,10 @@
   var drop=document.getElementById('drop'), dropT=document.getElementById('dropT'), dropS=document.getElementById('dropS'), fileInput=document.getElementById('file');
   var adjust=document.getElementById('adjust'), zoom=document.getElementById('zoom'), zoomVal=document.getElementById('zoomVal');
   var btnReset=document.getElementById('btnReset'), btnRemove=document.getElementById('btnRemove'), btnReserve=document.getElementById('btnReserve'), hint=document.getElementById('hint');
+  var RESERVE_LABEL=btnReserve.textContent;
+  // Artwork can be several megabytes over mobile data, so the button says what
+  // is happening. Without it the page just sits there and people click again.
+  function resetReserveBtn(){ btnReserve.textContent=RESERVE_LABEL; renderSummary(); }
 
   function slots(){ return sel ? (sel.c1-sel.c0+1)*(sel.r1-sel.r0+1) : 0; }
   function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
@@ -497,11 +501,39 @@
   }
   function renderAll(){ renderSel(); renderArt(); renderSummary(); }
 
+  // Exactly what the server accepts. Anything wider than this means a buyer can
+  // pick a file, watch it preview correctly, frame it, and only be refused at
+  // the very last step.
+  var ARTWORK_TYPES={'image/png':1,'image/jpeg':1,'image/webp':1};
+  var ARTWORK_MAX_BYTES=5*1024*1024;
+
   function loadFile(f){
-    if(!f || !/^image\//.test(f.type)){ toast('That is not an image','Drop a PNG or JPG logo.'); return; }
+    if(!f) return;
+    if(!ARTWORK_TYPES[f.type]){
+      // SVG gets its own message because it is the format brands hand out for
+      // logos, so it is the refusal buyers are most likely to hit. It is
+      // excluded on purpose: an SVG is code and can carry scripts.
+      var isSvg=/svg/i.test(f.type||'') || /\.svg$/i.test(f.name||'');
+      if(isSvg) toast('SVG files are not supported','Export your logo as a PNG and drop it in again.');
+      else toast('That file type is not supported','Use a PNG, JPG or WEBP image.');
+      return;
+    }
+    if(f.size>ARTWORK_MAX_BYTES){
+      var mb=Math.round(f.size/1048576*10)/10;
+      toast('That image is too large', mb+' MB, and the limit is 5 MB. Export it smaller and try again.');
+      return;
+    }
     if(!sel){ toast('Select slots first','Drag across the grid, then drop your logo.'); return; }
     var rd=new FileReader();
-    rd.onload=function(){ var im=new Image(); im.onload=function(){ art={img:im,w:im.naturalWidth,h:im.naturalHeight,z:1,fpx:0,fpy:0}; zoom.value=1; zoomVal.textContent='1.0×'; adjust.classList.remove('hidden'); renderAll(); }; im.src=rd.result; };
+    rd.onerror=function(){ toast('Could not read that file','Try again, or export the logo as a PNG.'); };
+    rd.onload=function(){
+      var im=new Image();
+      im.onload=function(){ art={img:im,w:im.naturalWidth,h:im.naturalHeight,z:1,fpx:0,fpy:0}; zoom.value=1; zoomVal.textContent='1.0×'; adjust.classList.remove('hidden'); renderAll(); };
+      // Without this, a file the browser cannot decode does nothing at all: no
+      // error, no change on screen, and the buyer concludes the site is broken.
+      im.onerror=function(){ toast('That image could not be opened','It may be damaged or in a format this browser cannot read. Try exporting it as a PNG.'); };
+      im.src=rd.result;
+    };
     rd.readAsDataURL(f);
   }
   drop.addEventListener('click', function(){ if(!drop.classList.contains('disabled')) fileInput.click(); });
@@ -529,6 +561,7 @@
     var cells=[];
     for(var r=sel.r0;r<=sel.r1;r++){ for(var c=sel.c0;c<=sel.c1;c++){ cells.push({col:c,row:r}); } }
     btnReserve.disabled=true;
+    btnReserve.textContent='Uploading…';
     fetch('/api/reserve', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
       cells:cells,
       artwork: art ? art.img.src : null,
@@ -547,17 +580,17 @@
               else {
                 var cmsg=(cres.data.error || 'Something went wrong.')+(cres.data.detail?': '+cres.data.detail:'');
                 toast('Could not start checkout', cmsg);
-                btnReserve.disabled = slots()===0;
+                resetReserveBtn();
               }
             });
         } else {
           var msg=(res.data.error || 'Something went wrong. Try again.')+(res.data.detail?': '+res.data.detail:'');
           toast('Could not reserve', msg);
           if(res.data.error && res.data.error.indexOf('sold')>-1){ loadSlots(); }
-          btnReserve.disabled = slots()===0;
+          resetReserveBtn();
         }
       })
-      .catch(function(){ toast('Network error','Could not reach the server. Try again.'); btnReserve.disabled = slots()===0; });
+      .catch(function(){ toast('Network error','Could not reach the server. Try again.'); resetReserveBtn(); });
   });
 
   var toastEl=document.getElementById('toast'), tT=document.getElementById('toastT'), tS=document.getElementById('toastS'), tTimer;
