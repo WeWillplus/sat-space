@@ -29,6 +29,11 @@
   .btn-primary:hover{background:#CF7409;}
 
   #status{margin-top:18px; font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace; font-size:11.5px; color:#4A4136; white-space:pre-wrap; line-height:1.6;}
+  .sharpen{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 14px; font-size:13px;}
+  .sharpen label{font-weight:600;}
+  .sharpen input[type=range]{flex:1; min-width:160px; max-width:260px;}
+  .sharpen output{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace; font-size:12px; min-width:34px;}
+  .sharpen .hint{color:#8A7F6B; font-size:11.5px; flex-basis:100%;}
 </style>
 </head>
 <body>
@@ -39,6 +44,13 @@
     <div class="sub">Three modes: <b>Slots Only</b> (transparent, real overlay for footage), <b>Empty Grid</b> (plain white/black grid to preview placement), <b>Grid + Slots</b> (both together). All at full 1080&times;1920 reel resolution.</div>
 
     <div class="preview-shell"><canvas id="exportCanvas" width="1080" height="1920"></canvas></div>
+
+    <div class="sharpen">
+      <label for="sharpen">Sharpening</label>
+      <input type="range" id="sharpen" min="0" max="1" step="0.05" value="0.55">
+      <output id="sharpenVal">0.55</output>
+      <span class="hint">0 is off. Above ~0.7 starts to halo. Regenerate after changing.</span>
+    </div>
 
     <div class="btns">
       <button class="btn" id="btnRegen" type="button">Slots Only</button>
@@ -124,8 +136,13 @@
   // How hard to sharpen after downscaling. Any downscale throws away the fine
   // detail that makes edges read as sharp; this puts the appearance of it back.
   // It invents no resolution, it just stops 60px logos looking mushy.
-  // 0 disables it. Above about 0.6 it starts to look crunchy and haloed.
-  var SHARPEN_AMOUNT=0.35;
+  //
+  // Exposed as a slider rather than a constant because the right value is a
+  // judgement call that depends on the artwork, and comparing exports is the
+  // only way to make it.
+  var sharpenEl=document.getElementById('sharpen'), sharpenVal=document.getElementById('sharpenVal');
+  sharpenEl.addEventListener('input', function(){ sharpenVal.textContent=sharpenEl.value; });
+  function sharpenAmount(){ return parseFloat(sharpenEl.value) || 0; }
 
   // Standard 3x3 unsharp kernel, applied to colour and alpha alike. Alpha
   // matters as much as colour here: on a logo with a transparent background it
@@ -190,7 +207,7 @@
       ectx.imageSmoothingEnabled=true;
       ectx.imageSmoothingQuality='high';
       ectx.drawImage(src, 0, 0, dw, dh);
-      sharpen(exact, SHARPEN_AMOUNT);
+      sharpen(exact, sharpenAmount());
 
       ctx.save();
       ctx.beginPath();
