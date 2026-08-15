@@ -118,9 +118,16 @@ export async function onRequestPost(context) {
   const slotCount = cells.length;
   const satsAmount = slotCount * SATS_PER_SLOT;
 
-  const artZoom = typeof body.artZoom === 'number' ? body.artZoom : 1;
-  const artOffsetX = typeof body.artOffsetX === 'number' ? body.artOffsetX : 0;
-  const artOffsetY = typeof body.artOffsetY === 'number' ? body.artOffsetY : 0;
+  // Clamped to the same range the on-screen controls allow. Without this a
+  // zoom of 0, a negative number or 1e9 would be stored happily and render the
+  // buyer's artwork invisible or absurd, on a slot they have already paid for.
+  // Same shape of problem as accepting a purchase with no artwork at all.
+  function clamp(v, lo, hi, fallback) {
+    return typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
+  }
+  const artZoom = clamp(body.artZoom, 1, 4, 1);
+  const artOffsetX = clamp(body.artOffsetX, -1, 1, 0);
+  const artOffsetY = clamp(body.artOffsetY, -1, 1, 0);
 
   // Step 1: create the purchase row first so we have an id to claim slots with.
   const insertRes = await fetch(env.SUPABASE_URL + '/rest/v1/purchases', {
