@@ -121,6 +121,46 @@
     return cur;
   }
 
+  // How hard to sharpen after downscaling. Any downscale throws away the fine
+  // detail that makes edges read as sharp; this puts the appearance of it back.
+  // It invents no resolution, it just stops 60px logos looking mushy.
+  // 0 disables it. Above about 0.6 it starts to look crunchy and haloed.
+  var SHARPEN_AMOUNT=0.35;
+
+  // Standard 3x3 unsharp kernel, applied to colour and alpha alike. Alpha
+  // matters as much as colour here: on a logo with a transparent background it
+  // is the alpha edge that defines the silhouette, so sharpening colour alone
+  // would leave the outline just as soft as before.
+  function sharpen(cv, amount){
+    var w=cv.width, h=cv.height;
+    if(amount<=0 || w<3 || h<3) return cv;
+    var c=cv.getContext('2d');
+    var src;
+    // Throws if the canvas is tainted by a cross-origin image. Skipping the
+    // sharpen is better than failing the whole export.
+    try { src=c.getImageData(0,0,w,h); } catch(e){ return cv; }
+    var out=c.createImageData(w,h);
+    var s=src.data, d=out.data;
+    var centre=1+4*amount, row=w*4;
+
+    for(var y=0;y<h;y++){
+      for(var x=0;x<w;x++){
+        var i=(y*w+x)*4;
+        if(x===0||y===0||x===w-1||y===h-1){
+          d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=s[i+3];
+          continue;
+        }
+        for(var ch=0;ch<4;ch++){
+          var p=i+ch;
+          var v=s[p]*centre - amount*(s[p-4]+s[p+4]+s[p-row]+s[p+row]);
+          d[p]= v<0 ? 0 : (v>255 ? 255 : v);
+        }
+      }
+    }
+    c.putImageData(out,0,0);
+    return cv;
+  }
+
   function drawPurchase(group){
     var cols=group.cells.map(function(c){return c.col;}), rows=group.cells.map(function(c){return c.row;});
     var c0=Math.min.apply(null,cols), c1=Math.max.apply(null,cols);
@@ -133,14 +173,30 @@
       var maxX=Math.max(0,(iw-rectW)/2), maxY=Math.max(0,(ih-rectH)/2);
       var drawX=rectX + (rectW-iw)/2 + ox*maxX;
       var drawY=rectY + (rectH-ih)/2 + oy*maxY;
-      var src=downscaled(img, Math.ceil(iw), Math.ceil(ih));
+      // Snap to whole pixels. Drawing at x=417.3 makes the browser resample the
+      // image across pixel boundaries and blur it, even when nothing is being
+      // scaled. Rounding costs at most half a pixel of position and removes a
+      // blur that was landing on every single logo.
+      var dw=Math.max(1,Math.round(iw)), dh=Math.max(1,Math.round(ih));
+      var dx=Math.round(drawX), dy=Math.round(drawY);
+
+      // Render once at exactly the final size, sharpen there, then blit 1:1.
+      // Doing the sharpen at final size is the point: sharpening before the
+      // downscale would just be thrown away by it.
+      var src=downscaled(img, dw, dh);
+      var exact=document.createElement('canvas');
+      exact.width=dw; exact.height=dh;
+      var ectx=exact.getContext('2d');
+      ectx.imageSmoothingEnabled=true;
+      ectx.imageSmoothingQuality='high';
+      ectx.drawImage(src, 0, 0, dw, dh);
+      sharpen(exact, SHARPEN_AMOUNT);
+
       ctx.save();
       ctx.beginPath();
       ctx.rect(rectX,rectY,rectW,rectH);
       ctx.clip();
-      ctx.imageSmoothingEnabled=true;
-      ctx.imageSmoothingQuality='high';
-      ctx.drawImage(src, drawX, drawY, iw, ih);
+      ctx.drawImage(exact, dx, dy);
       ctx.restore();
       log('Placed purchase #'+group.purchaseId+' ('+group.cells.length+' slot'+(group.cells.length===1?'':'s')+')');
     });
