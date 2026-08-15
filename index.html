@@ -486,7 +486,9 @@
   function renderSummary(){
     var n=slots(), s=n*SATS, e=s/1e8*RATE;
     slotCountEl.textContent=n; satsEl.textContent=nfSats.format(s); eurEl.textContent=nfEur.format(e);
-    btnReserve.disabled=n===0;
+    // Artwork is not optional. Without this, a buyer can select slots, skip the
+    // upload entirely and pay for a block with nothing in it.
+    btnReserve.disabled = n===0 || !art;
     if(art){ drop.classList.add('disabled'); drop.classList.remove('armed'); dropT.textContent='Artwork placed'; dropS.innerHTML='adjust it below, or remove to swap'; }
     else if(n>0){ drop.classList.remove('disabled'); drop.classList.add('armed'); dropT.textContent='Drop your logo'; dropS.innerHTML='or click to browse &middot; PNG or JPG'; }
     else { drop.classList.add('disabled'); drop.classList.remove('armed'); dropT.textContent='Select slots first'; dropS.innerHTML='then drop a logo or click to browse'; }
@@ -523,6 +525,7 @@
   btnRemove.addEventListener('click', function(){ art=null; adjust.classList.add('hidden'); refs.editor.img.removeAttribute('src'); refs.reel.img.removeAttribute('src'); renderAll(); });
   btnReserve.addEventListener('click', function(){
     if(slots()===0 || !sel) return;
+    if(!art){ toast('Add your artwork first','Drop a logo into the box on the right, then reserve.'); return; }
     var cells=[];
     for(var r=sel.r0;r<=sel.r1;r++){ for(var c=sel.c0;c<=sel.c1;c++){ cells.push({col:c,row:r}); } }
     btnReserve.disabled=true;

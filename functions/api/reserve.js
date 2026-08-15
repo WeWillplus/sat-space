@@ -94,6 +94,11 @@ export async function onRequestPost(context) {
   if (!rawCells || rawCells.length === 0) return json({ error: 'No slots selected' }, 400);
   if (rawCells.length > MAX_CELLS) return json({ error: 'Too many slots selected' }, 400);
 
+  // Rejected here, before anything is written, so a buyer can never pay for a
+  // block with nothing in it. The browser blocks this too, but the browser is
+  // not the thing standing between a buyer and a 300 euro mistake.
+  if (!body.artwork) return json({ error: 'Artwork is required, upload an image before reserving' }, 400);
+
   for (const c of rawCells) {
     if (typeof c.col !== 'number' || typeof c.row !== 'number' ||
         !Number.isInteger(c.col) || !Number.isInteger(c.row) ||
