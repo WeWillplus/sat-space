@@ -41,7 +41,7 @@
   <a class="back" href="index.html">&larr; Back to Sat Space</a>
   <div class="box">
     <h1>Reel Overlay Export</h1>
-    <div class="sub">Three modes: <b>Slots Only</b> (transparent, real overlay for footage), <b>Empty Grid</b> (plain white/black grid to preview placement), <b>Grid + Slots</b> (both together). All at full 1080&times;1920 reel resolution.</div>
+    <div class="sub">Four modes: <b>Slots Only</b> (transparent, real overlay for footage), <b>Empty Grid</b> (plain white/black grid to preview placement), <b>Grid + Slots</b> (both together), <b>Announcement</b> (the reel mockup with the grid over it, ready to post). All at full 1080&times;1920 reel resolution.</div>
 
     <div class="preview-shell"><canvas id="exportCanvas" width="1080" height="1920"></canvas></div>
 
@@ -56,6 +56,7 @@
       <button class="btn" id="btnRegen" type="button">Slots Only</button>
       <button class="btn" id="btnEmptyGrid" type="button">Empty Grid</button>
       <button class="btn" id="btnGridAndSlots" type="button">Grid + Slots</button>
+      <button class="btn" id="btnAnnouncement" type="button">Announcement</button>
       <button class="btn btn-primary" id="btnDownload" type="button" disabled>Download PNG</button>
     </div>
 
@@ -68,7 +69,7 @@
   var COLS=18, ROWS=8, CELL=60;
   var canvas=document.getElementById('exportCanvas'), ctx=canvas.getContext('2d');
   var statusEl=document.getElementById('status');
-  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnGridAndSlots=document.getElementById('btnGridAndSlots'), btnDownload=document.getElementById('btnDownload');
+  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnGridAndSlots=document.getElementById('btnGridAndSlots'), btnAnnouncement=document.getElementById('btnAnnouncement'), btnDownload=document.getElementById('btnDownload');
   function log(msg){ statusEl.textContent += msg + '\n'; }
 
   function drawGridLines(){
@@ -219,24 +220,98 @@
     });
   }
 
-  function generate(includeGrid){
+  // ---------------------------------------------------------------------------
+  // Announcement mode: the reel preview from the public site, at full size
+  // ---------------------------------------------------------------------------
+  // Everything layered on top of the photo is a plain CSS shape in index.html,
+  // so the geometry below is copied from that stylesheet rather than guessed.
+  // Those rules are written in fixed pixels against the preview's on-screen
+  // width, so REEL_REF_W is that width and every value scales from it. If the
+  // furniture ever looks too big or too small, this is the one number to change.
+  var REEL_REF_W=270;
+  var RS=canvas.width/REEL_REF_W;
+  var ACCENT='#F7931A';
+
+  function bar(x,y,w,h,r){
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); }
+    else ctx.fillRect(x,y,w,h);
+  }
+
+  function drawMockupBackground(){
+    ctx.fillStyle='#20242b';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    return loadImage('ss_mock.jpg').then(function(img){
+      // The site nudges the photo down 9% so the pointing gesture sits under
+      // the band. Scaling to cover the shifted box too, then clamping, means
+      // no dark strip can appear along an edge at full resolution.
+      var shift=canvas.height*0.09;
+      var scale=Math.max(canvas.width/img.naturalWidth,(canvas.height+shift)/img.naturalHeight);
+      var w=img.naturalWidth*scale, h=img.naturalHeight*scale;
+      var x=(canvas.width-w)/2;
+      var y=Math.min(0, Math.max(canvas.height-h, (canvas.height-h)/2 + shift));
+      ctx.drawImage(img, x, y, w, h);
+      log('Drew reel mockup background.');
+    });
+  }
+
+  // Drawn last so it sits over the artwork, exactly as it does on the site.
+  function drawReelChrome(){
+    var bandBottom=canvas.height*0.25;
+
+    ctx.save();
+    ctx.fillStyle=ACCENT;
+    ctx.font='700 '+(8*RS)+'px ui-monospace,"SF Mono",Menlo,Consolas,monospace';
+    ctx.textBaseline='top';
+    if('letterSpacing' in ctx) ctx.letterSpacing=(0.8*RS)+'px';
+    ctx.shadowColor='rgba(0,0,0,.6)';
+    ctx.shadowOffsetY=1*RS; ctx.shadowBlur=2*RS;
+    ctx.fillText('SAT SPACE', 6*RS, bandBottom+3*RS);
+    ctx.restore();
+
+    // Two caption bars, bottom left. The second is shorter, as in the CSS.
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    var uiLeft=9*RS, uiRight=canvas.width-38*RS, uiBottom=canvas.height-11*RS;
+    var barH=7*RS, barGap=5*RS;
+    var y2=uiBottom-barH, y1=y2-barGap-barH;
+    bar(uiLeft, y1, uiRight-uiLeft, barH, 1*RS);
+    bar(uiLeft, y2, (uiRight-uiLeft)*0.58, barH, 1*RS);
+
+    // Three action circles, bottom right.
+    ctx.fillStyle='rgba(255,255,255,.45)';
+    var d=14*RS, cGap=10*RS;
+    var cx=canvas.width-8*RS-d/2;
+    for(var i=0;i<3;i++){
+      var cy=(canvas.height-12*RS)-d/2-i*(d+cGap);
+      ctx.beginPath(); ctx.arc(cx, cy, d/2, 0, Math.PI*2); ctx.fill();
+    }
+    log('Drew reel furniture.');
+  }
+
+  function generate(opts){
+    opts=opts||{};
     statusEl.textContent='';
     btnDownload.disabled=true;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(includeGrid){ drawGridLines(); log('Drew grid base.'); }
-    log('Fetching approved slots...');
-    fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
-      var groups={};
-      list.forEach(function(s){
-        if(s.status==='approved' && s.purchaseId && s.imageUrl){
-          if(!groups[s.purchaseId]) groups[s.purchaseId]={ purchaseId:s.purchaseId, cells:[], imageUrl:s.imageUrl, artZoom:s.artZoom, artOffsetX:s.artOffsetX, artOffsetY:s.artOffsetY };
-          groups[s.purchaseId].cells.push({col:s.col,row:s.row});
-        }
+
+    var start = opts.mockup ? drawMockupBackground() : Promise.resolve();
+
+    start.then(function(){
+      if(opts.grid){ drawGridLines(); log('Drew grid base.'); }
+      log('Fetching approved slots...');
+      return fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
+        var groups={};
+        list.forEach(function(s){
+          if(s.status==='approved' && s.purchaseId && s.imageUrl){
+            if(!groups[s.purchaseId]) groups[s.purchaseId]={ purchaseId:s.purchaseId, cells:[], imageUrl:s.imageUrl, artZoom:s.artZoom, artOffsetX:s.artOffsetX, artOffsetY:s.artOffsetY };
+            groups[s.purchaseId].cells.push({col:s.col,row:s.row});
+          }
+        });
+        var keys=Object.keys(groups);
+        log('Found '+keys.length+' approved purchase(s) to place.');
+        return Promise.all(keys.map(function(k){ return drawPurchase(groups[k]); }));
       });
-      var keys=Object.keys(groups);
-      log('Found '+keys.length+' approved purchase(s) to place.');
-      return Promise.all(keys.map(function(k){ return drawPurchase(groups[k]); }));
     }).then(function(){
+      if(opts.mockup) drawReelChrome();
       log('Done. Ready to download.');
       btnDownload.disabled=false;
     }).catch(function(err){
@@ -263,10 +338,11 @@
     }, 'image/png');
   });
 
-  btnRegen.addEventListener('click', function(){ generate(false); });
+  btnRegen.addEventListener('click', function(){ generate({grid:false}); });
   btnEmptyGrid.addEventListener('click', generateEmptyGrid);
-  btnGridAndSlots.addEventListener('click', function(){ generate(true); });
-  generate(false);
+  btnGridAndSlots.addEventListener('click', function(){ generate({grid:true}); });
+  btnAnnouncement.addEventListener('click', function(){ generate({grid:true, mockup:true}); });
+  generate({grid:false});
 })();
 </script>
 </body>
