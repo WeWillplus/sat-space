@@ -35,7 +35,10 @@
   .ss-word { font-family:var(--display); font-size:28px; font-weight:700; letter-spacing:.015em; text-transform:uppercase; line-height:1; }
   .ss-sub { font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--muted); }
   .ss-sub b { color:var(--blue); font-weight:700; }
-  .ss-meta { text-align:right; }
+  .ss-meta { display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+  .ss-ig { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; flex:none; border:2px solid var(--ink); background:var(--paper-2); color:var(--ink); box-shadow:3px 3px 0 var(--ink); transition:color .12s ease, transform .08s ease, box-shadow .08s ease; }
+  .ss-ig:hover { color:var(--accent-deep); }
+  .ss-ig:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
   .ss-counter { font-family:var(--mono); font-size:20px; font-weight:700; letter-spacing:.02em; color:var(--ink); font-variant-numeric:tabular-nums; }
   .ss-counter .s { color:var(--accent); }
   .ss-meta .l { font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:3px; }
@@ -186,6 +189,13 @@
         </div>
       </div>
       <div class="ss-meta">
+        <a class="ss-ig" href="https://www.instagram.com/dustin__williamson/" target="_blank" rel="noopener noreferrer" aria-label="Dustin Williamson on Instagram" title="Follow on Instagram">
+          <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" focusable="false">
+            <rect x="2.75" y="2.75" width="18.5" height="18.5" rx="5.5" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="12" r="4.15" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="17.45" cy="6.55" r="1.35" fill="currentColor"/>
+          </svg>
+        </a>
         <div class="ss-counter"><span id="claimed">0</span> / 144 <span class="s">claimed</span></div>
       </div>
     </header>
