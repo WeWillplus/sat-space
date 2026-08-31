@@ -41,7 +41,7 @@
   <a class="back" href="index.html">&larr; Back to Sat Space</a>
   <div class="box">
     <h1>Reel Overlay Export</h1>
-    <div class="sub">Four modes: <b>Slots Only</b> (transparent, real overlay for footage), <b>Empty Grid</b> (plain white/black grid to preview placement), <b>Grid + Slots</b> (both together), <b>Announcement</b> (the reel mockup with the grid over it, ready to post). All at full 1080&times;1920 reel resolution.</div>
+    <div class="sub">Five modes: <b>Slots Only</b> (transparent, real overlay for footage), <b>Empty Grid</b> (plain white/black grid to preview placement), <b>Grid + Slots</b> (both together), <b>Announcement</b> (the reel mockup with the grid over it, ready to post), <b>One Per Upload</b> (a separate transparent PNG for each buyer, each in its real grid position). All at full 1080&times;1920 reel resolution.</div>
 
     <div class="preview-shell"><canvas id="exportCanvas" width="1080" height="1920"></canvas></div>
 
@@ -57,6 +57,7 @@
       <button class="btn" id="btnEmptyGrid" type="button">Empty Grid</button>
       <button class="btn" id="btnGridAndSlots" type="button">Grid + Slots</button>
       <button class="btn" id="btnAnnouncement" type="button">Announcement</button>
+      <button class="btn" id="btnEachSeparately" type="button">One Per Upload</button>
       <button class="btn btn-primary" id="btnDownload" type="button" disabled>Download PNG</button>
     </div>
 
@@ -69,7 +70,7 @@
   var COLS=18, ROWS=8, CELL=60;
   var canvas=document.getElementById('exportCanvas'), ctx=canvas.getContext('2d');
   var statusEl=document.getElementById('status');
-  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnGridAndSlots=document.getElementById('btnGridAndSlots'), btnAnnouncement=document.getElementById('btnAnnouncement'), btnDownload=document.getElementById('btnDownload');
+  var btnRegen=document.getElementById('btnRegen'), btnEmptyGrid=document.getElementById('btnEmptyGrid'), btnGridAndSlots=document.getElementById('btnGridAndSlots'), btnAnnouncement=document.getElementById('btnAnnouncement'), btnEachSeparately=document.getElementById('btnEachSeparately'), btnDownload=document.getElementById('btnDownload');
   function log(msg){ statusEl.textContent += msg + '\n'; }
 
   function drawGridLines(){
@@ -287,6 +288,65 @@
     log('Drew reel furniture.');
   }
 
+  // Approved slots belonging to the same purchase are one upload placed across
+  // a block of cells, so they are grouped before anything is drawn.
+  function groupApproved(list){
+    var groups={};
+    list.forEach(function(s){
+      if(s.status==='approved' && s.purchaseId && s.imageUrl){
+        if(!groups[s.purchaseId]) groups[s.purchaseId]={ purchaseId:s.purchaseId, cells:[], imageUrl:s.imageUrl, artZoom:s.artZoom, artOffsetX:s.artOffsetX, artOffsetY:s.artOffsetY };
+        groups[s.purchaseId].cells.push({col:s.col,row:s.row});
+      }
+    });
+    return groups;
+  }
+
+  function downloadCanvas(filename){
+    return new Promise(function(resolve,reject){
+      canvas.toBlob(function(blob){
+        if(!blob){ reject(new Error('could not create image, possible CORS issue with the artwork source')); return; }
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url; a.download=filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        // Revoking straight away can cancel the download in some browsers, and
+        // the same pause keeps a batch from arriving fast enough to be treated
+        // as a popup burst and blocked.
+        setTimeout(function(){ URL.revokeObjectURL(url); resolve(); }, 400);
+      }, 'image/png');
+    });
+  }
+
+  // One transparent 1080x1920 PNG per upload, each with that buyer's artwork
+  // alone, sitting in its real grid position. Drop the whole set on a timeline
+  // and slots can be revealed one at a time without any masking.
+  function exportEach(){
+    statusEl.textContent='';
+    btnDownload.disabled=true;
+    log('Fetching approved slots...');
+    fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
+      var groups=groupApproved(list);
+      var keys=Object.keys(groups);
+      if(keys.length===0){ log('Nothing approved to export yet.'); return null; }
+      log('Exporting '+keys.length+' upload(s), one file each.');
+      // Strictly one at a time: each file needs the canvas to itself.
+      return keys.reduce(function(chain,k){
+        return chain.then(function(){
+          var g=groups[k];
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          return drawPurchase(g)
+            .then(function(){ return downloadCanvas(timestampName('P'+g.purchaseId)); })
+            .then(function(){ log('Saved purchase #'+g.purchaseId+'.'); });
+        });
+      }, Promise.resolve());
+    }).then(function(){
+      log('Done. Canvas shows the last one exported.');
+      btnDownload.disabled=false;
+    }).catch(function(err){
+      log('Error: '+err.message);
+    });
+  }
+
   function generate(opts){
     opts=opts||{};
     statusEl.textContent='';
@@ -299,13 +359,7 @@
       if(opts.grid){ drawGridLines(); log('Drew grid base.'); }
       log('Fetching approved slots...');
       return fetch('/api/slots').then(function(r){ return r.json(); }).then(function(list){
-        var groups={};
-        list.forEach(function(s){
-          if(s.status==='approved' && s.purchaseId && s.imageUrl){
-            if(!groups[s.purchaseId]) groups[s.purchaseId]={ purchaseId:s.purchaseId, cells:[], imageUrl:s.imageUrl, artZoom:s.artZoom, artOffsetX:s.artOffsetX, artOffsetY:s.artOffsetY };
-            groups[s.purchaseId].cells.push({col:s.col,row:s.row});
-          }
-        });
+        var groups=groupApproved(list);
         var keys=Object.keys(groups);
         log('Found '+keys.length+' approved purchase(s) to place.');
         return Promise.all(keys.map(function(k){ return drawPurchase(groups[k]); }));
@@ -320,28 +374,22 @@
   }
 
   function pad(n){ return n<10 ? '0'+n : ''+n; }
-  function timestampName(){
+  function timestampName(suffix){
     var d=new Date();
     var datePart=pad(d.getFullYear()%100)+pad(d.getMonth()+1)+pad(d.getDate());
     var timePart=pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
-    return datePart+'__'+timePart+'__SatSpace.png';
+    return datePart+'__'+timePart+'__SatSpace'+(suffix ? '__'+suffix : '')+'.png';
   }
 
   btnDownload.addEventListener('click', function(){
-    canvas.toBlob(function(blob){
-      if(!blob){ log('Export failed: could not create image (possible CORS issue with the image source).'); return; }
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement('a');
-      a.href=url; a.download=timestampName();
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    }, 'image/png');
+    downloadCanvas(timestampName()).catch(function(e){ log('Export failed: '+e.message); });
   });
 
   btnRegen.addEventListener('click', function(){ generate({grid:false}); });
   btnEmptyGrid.addEventListener('click', generateEmptyGrid);
   btnGridAndSlots.addEventListener('click', function(){ generate({grid:true}); });
   btnAnnouncement.addEventListener('click', function(){ generate({grid:true, mockup:true}); });
+  btnEachSeparately.addEventListener('click', exportEach);
   generate({grid:false});
 })();
 </script>
