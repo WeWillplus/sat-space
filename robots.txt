@@ -1,0 +1,10 @@
+# Everything public is open to search engines and AI crawlers alike.
+# The admin and API paths are also behind Cloudflare Access; listing them here
+# just stops crawlers wasting time on login redirects.
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /success
+
+Sitemap: https://satspace.wewillplus.com/sitemap.xml

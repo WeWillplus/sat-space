@@ -1,0 +1,27 @@
+# Sat Space
+
+> Ad space inside short-form video. 144 slots in the top band of every reel Dustin Williamson posts on Instagram, TikTok, YouTube and Nostr, for one fixed campaign from 15 August to 15 October 2026. Priced in Bitcoin at 140,000 sats per slot, paid in euros at the live rate at checkout.
+
+Sat Space adapts the idea behind the 2005 Million Dollar Homepage, where a website's pixels were sold as ad space, to short-form video. Instead of a web page, the grid sits in the top quarter of every reel. It is the first project of Chapter 2 of Dustin Williamson's public challenge to earn 1 Bitcoin through content creation.
+
+## How it works
+
+- The top 25% of each 1080x1920 reel is an 18 by 8 grid of 144 slots, each 60x60 pixels.
+- Buyers select one slot or a rectangular block of adjacent slots and upload one static image (PNG, JPG or WEBP, up to 5 MB).
+- One slot costs 140,000 satoshi. The euro amount is calculated from the live BTC/EUR rate and locked at checkout. Payment runs through Stripe.
+- Every slot ends on the same date, 15 October 2026, regardless of when it was bought, so earlier buyers get more airtime.
+- Every submission is reviewed by hand before it appears in a reel. Rejected purchases are refunded minus a 40 euro handling fee.
+- Not allowed: adult content, hate, violence, scams, political content, and cryptocurrencies or tokens other than Bitcoin.
+- Anyone can buy, individuals and businesses. There is no guaranteed number of views or reels.
+
+## Pages
+
+- [Sat Space](https://satspace.wewillplus.com/): the live grid, slot selection, artwork upload and checkout
+- [Terms (AGB)](https://satspace.wewillplus.com/agb): full terms in German and English
+- [Privacy policy](https://satspace.wewillplus.com/datenschutz)
+- [Impressum](https://satspace.wewillplus.com/impressum)
+
+## About the creator
+
+- [Dustin Williamson on Instagram](https://www.instagram.com/dustin__williamson/)
+- [WeWill+](https://wewillplus.com)
