@@ -1,4 +1,4 @@
-import { json, isBlockedOrigin, isRateLimited, sweepExpired, purchaseToken } from '../../lib/api-guards.js';
+import { json, isBlockedOrigin, isRateLimited, sweepExpired, purchaseToken, isCampaignOver } from '../../lib/api-guards.js';
 
 const SATS_PER_SLOT = 140000;
 const MAX_ARTWORK_BYTES = 5 * 1024 * 1024;
@@ -77,6 +77,12 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   if (isBlockedOrigin(request)) return json({ error: 'Request did not come from Sat Space' }, 403);
+
+  // Closed first, before slots are claimed or anything is written. The browser
+  // blocks this too, but the browser is not what guarantees it.
+  if (isCampaignOver()) {
+    return json({ error: 'The Sat Space campaign has ended, slots are no longer for sale' }, 410);
+  }
 
   if (await isRateLimited(env, request, 'reserve')) {
     return json({ error: 'Too many reservation attempts, wait a few minutes and try again' }, 429);

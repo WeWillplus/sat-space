@@ -1,4 +1,4 @@
-import { json, sweepExpired } from '../../lib/api-guards.js';
+import { json, sweepExpired, isCampaignOver } from '../../lib/api-guards.js';
 
 // The sweep is cheap but this endpoint runs on every single page load, so it
 // is throttled rather than run every time. A missed sweep costs nothing, the
@@ -99,7 +99,7 @@ export async function onRequestGet(context) {
     return entry;
   });
 
-  cachedBody = JSON.stringify(out);
+  cachedBody = JSON.stringify({ campaignOver: isCampaignOver(), slots: out });
   cachedAt = Date.now();
   return cachedResponse(cachedBody);
 }

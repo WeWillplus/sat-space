@@ -290,7 +290,10 @@
 
   // Approved slots belonging to the same purchase are one upload placed across
   // a block of cells, so they are grouped before anything is drawn.
-  function groupApproved(list){
+  function groupApproved(payload){
+    // /api/slots returns {campaignOver, slots} now, and used to return a bare
+    // array. Both are accepted so a cached response cannot empty an export.
+    var list = Array.isArray(payload) ? payload : ((payload && payload.slots) || []);
     var groups={};
     list.forEach(function(s){
       if(s.status==='approved' && s.purchaseId && s.imageUrl){

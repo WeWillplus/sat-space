@@ -1,4 +1,4 @@
-import { json, isBlockedOrigin, isRateLimited, STRIPE_SESSION_SECONDS, purchaseToken, tokensMatch } from '../../lib/api-guards.js';
+import { json, isBlockedOrigin, isRateLimited, STRIPE_SESSION_SECONDS, purchaseToken, tokensMatch, isCampaignOver } from '../../lib/api-guards.js';
 
 function isValidId(v) {
   const n = Number(v);
@@ -9,6 +9,12 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   if (isBlockedOrigin(request)) return json({ error: 'Request did not come from Sat Space' }, 403);
+
+  // Also closed here. A reservation made just before the deadline must not be
+  // payable afterwards, and this is the only endpoint that creates a charge.
+  if (isCampaignOver()) {
+    return json({ error: 'The Sat Space campaign has ended, slots are no longer for sale' }, 410);
+  }
 
   if (await isRateLimited(env, request, 'checkout')) {
     return json({ error: 'Too many checkout attempts, wait a few minutes and try again' }, 429);

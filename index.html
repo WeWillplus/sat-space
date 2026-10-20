@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sat Space | Buy ad space in Instagram reels, priced in sats</title>
-<meta name="description" content="144 ad slots inside every reel I post on Instagram, TikTok, YouTube and Nostr. 140,000 sats per slot, paid in euros at the live rate. Runs 15 August to 15 October 2026.">
+<meta name="description" content="Sat Space sold 144 ad slots inside every reel I post on Instagram, TikTok, YouTube and Nostr, priced in sats. The campaign ran from 15 August to 15 October 2026 and has now finished.">
 <link rel="canonical" href="https://satspace.wewillplus.com/">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
@@ -15,14 +15,14 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://satspace.wewillplus.com/">
 <meta property="og:title" content="Sat Space | Buy ad space in my reels, priced in sats">
-<meta property="og:description" content="Your logo in the top band of every reel I post for two months. 144 slots, 140,000 sats each. Live 15 August to 15 October 2026.">
+<meta property="og:description" content="144 ad slots in the top band of every reel I post, priced in sats. The campaign ran from 15 August to 15 October 2026 and has now finished.">
 <meta property="og:image" content="https://satspace.wewillplus.com/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Sat Space: a grid of 144 ad slots in the top band of a reel, with Dustin pointing up at it.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sat Space | Buy ad space in my reels, priced in sats">
-<meta name="twitter:description" content="Your logo in the top band of every reel I post for two months. 144 slots, 140,000 sats each.">
+<meta name="twitter:description" content="144 ad slots in the top band of every reel I post, priced in sats. The campaign ran from 15 August to 15 October 2026.">
 <meta name="twitter:image" content="https://satspace.wewillplus.com/og-image.jpg">
 <script type="application/ld+json">
 {
@@ -54,7 +54,7 @@
    "url": "https://satspace.wewillplus.com/",
    "image": "https://satspace.wewillplus.com/og-image.jpg",
    "serviceType": "Social media advertising",
-   "description": "Ad space inside short-form video. 144 slots in the top band of every reel Dustin Williamson posts on Instagram, TikTok, YouTube and Nostr, for one fixed two-month campaign from 15 August to 15 October 2026. Each slot costs 140,000 satoshi, paid in euros at the live BTC/EUR rate at checkout. Every submission is manually approved.",
+   "description": "Ad space inside short-form video. 144 slots in the top band of every reel Dustin Williamson posted on Instagram, TikTok, YouTube and Nostr, for one fixed two-month campaign that ran from 15 August to 15 October 2026 and has now ended. Each slot cost 140,000 satoshi, paid in euros at the live BTC/EUR rate at checkout.",
    "provider": {
     "@id": "https://satspace.wewillplus.com/#dustin"
    },
@@ -209,6 +209,11 @@
   #artReel { outline:none; }
 
   .hint { font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-top:14px; }
+  .closed { background:var(--ink); color:var(--paper); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--accent); padding:16px 20px; margin-top:22px; display:none; }
+  .closed.on { display:block; }
+  .closed .t { font-family:var(--display); font-size:19px; font-weight:700; letter-spacing:.01em; }
+  .closed .s { font-size:13.5px; color:#D8D2C6; margin-top:6px; line-height:1.6; }
+  .closed .s b { color:var(--accent); }
 
   .card { background:var(--paper-2); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); padding:14px; }
   .card > .eyebrow { margin-bottom:12px; }
@@ -322,6 +327,11 @@
       </div>
     </header>
 
+    <div class="closed" id="closedBanner">
+      <div class="t">The campaign has finished.</div>
+      <div class="s">Sat Space ran from <b>15 August to 15 October 2026</b> and slots are no longer for sale. The grid below is how it ended. Thanks to everyone who took a slot.</div>
+    </div>
+
     <main class="ss-main">
       <div class="col-left">
         <section class="stage b-editor">
@@ -342,7 +352,7 @@
           <h1 class="intro-hi">Yoooo, welcome to Sat Space.</h1>
           <p class="intro-lead">Your chance to place your vision into my mission.</p>
           <p class="intro-body">144 spaces up for grabs. One space is <span class="num">140,000 sats</span>. All of them together? <span class="num">20,000,000 sats</span>. A whole <span class="num">0.2 Bitcoin</span>.</p>
-          <p class="intro-body">Live from <span class="num">15 August</span> to <span class="num">15 October 2026</span>. Every slot ends on the same day, so the early birds get the most airtime.</p>
+          <p class="intro-body" id="introRun">Live from <span class="num">15 August</span> to <span class="num">15 October 2026</span>. Every slot ends on the same day, so the early birds get the most airtime.</p>
           <p class="intro-body">If you missed it, I'm Dustin, on my way to earning 1 Bitcoin through content creation. Sat Space is Chapter 2. <span class="go">Let's go.</span></p>
         </div>
       </div>
@@ -400,7 +410,7 @@
               <div class="price"><span id="satsTotal">0</span><span class="u">sats</span></div>
               <div class="price-eur" id="eurTotal">&euro;0.00</div>
               <div class="rate-note" id="rateNote">Priced in sats. You pay the euro equivalent, locked at the live BTC rate on checkout. Loading live rate&hellip;</div>
-                <div class="rate-note">Runs 15 August to 15 October 2026. Every slot ends on the same day.</div>
+                <div class="rate-note" id="runNote">Runs 15 August to 15 October 2026. Every slot ends on the same day.</div>
             </div>
           </div>
         </div>
@@ -540,6 +550,21 @@
     });
   }
 
+  // Switches the page from shop to archive. The server refuses new purchases
+  // regardless; this is so nobody is invited to try and then turned away.
+  var campaignOver=false;
+  function closeCampaign(){
+    if(campaignOver) return;
+    campaignOver=true;
+    var b=document.getElementById('closedBanner'); if(b) b.classList.add('on');
+    var intro=document.getElementById('introRun');
+    if(intro) intro.innerHTML='Sat Space ran from <span class="num">15 August</span> to <span class="num">15 October 2026</span>. Every slot ended on the same day.';
+    var run=document.getElementById('runNote');
+    if(run) run.textContent='The campaign ended on 15 October 2026. Slots are no longer for sale.';
+    btnReserve.textContent='Campaign closed';
+    renderAll();
+  }
+
   function markSold(list){
     soldSet.clear();
     statusMap={};
@@ -567,7 +592,13 @@
     claimedEl.textContent=approvedCount;
   }
   function loadSlots(){
-    fetch('/api/slots').then(function(r){ return r.json(); }).then(markSold).catch(function(){ /* offline or first deploy without the endpoint yet, grid just stays empty */ });
+    fetch('/api/slots').then(function(r){ return r.json(); }).then(function(data){
+      // Accepts both the old bare array and the newer {campaignOver, slots}
+      // shape, so a cached response from either cannot break the grid.
+      var list = Array.isArray(data) ? data : ((data && data.slots) || []);
+      if(data && data.campaignOver) closeCampaign();
+      markSold(list);
+    }).catch(function(){ /* offline or first deploy without the endpoint yet, grid just stays empty */ });
   }
   loadSlots();
   loadRate();
@@ -625,7 +656,7 @@
     slotCountEl.textContent=n; satsEl.textContent=nfSats.format(s); eurEl.textContent=nfEur.format(e);
     // Artwork is not optional. Without this, a buyer can select slots, skip the
     // upload entirely and pay for a block with nothing in it.
-    btnReserve.disabled = n===0 || !art;
+    btnReserve.disabled = campaignOver || n===0 || !art;
     if(art){ drop.classList.add('disabled'); drop.classList.remove('armed'); dropT.textContent='Artwork placed'; dropS.innerHTML='adjust it below, or remove to swap'; }
     else if(n>0){ drop.classList.remove('disabled'); drop.classList.add('armed'); dropT.textContent='Drop your logo'; dropS.innerHTML='or click to browse &middot; PNG or JPG'; }
     else { drop.classList.add('disabled'); drop.classList.remove('armed'); dropT.textContent='Select slots first'; dropS.innerHTML='then drop a logo or click to browse'; }
@@ -689,6 +720,7 @@
   btnReset.addEventListener('click', function(){ if(!art)return; art.z=1; art.fpx=0; art.fpy=0; zoom.value=1; zoomVal.textContent='1.0×'; renderArt(); });
   btnRemove.addEventListener('click', function(){ art=null; adjust.classList.add('hidden'); refs.editor.img.removeAttribute('src'); refs.reel.img.removeAttribute('src'); renderAll(); });
   btnReserve.addEventListener('click', function(){
+    if(campaignOver){ toast('The campaign has finished','Sat Space ran until 15 October 2026. Slots are no longer for sale.'); return; }
     if(slots()===0 || !sel) return;
     if(!art){ toast('Add your artwork first','Drop a logo into the box on the right, then reserve.'); return; }
     var cells=[];
